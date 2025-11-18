@@ -1,0 +1,30 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: SIKAS
+  datasource:
+    url:
+    username:
+    password:
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+  jpa:
+    hibernate:
+      ddl-auto: create
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    show-sql: true
+    defer-datasource-initialization: true
+    properties:
+      hibernate:
+        default_schema: dbo
+        format_sql: true
+        dialect: org.hibernate.dialect.SQLServerDialect
+  sql:
+    init:
+      mode: always
+
+jwt:
+  secret: your_jwt_secret_key
+  expiration: 3600000 # 1 hour in milliseconds
