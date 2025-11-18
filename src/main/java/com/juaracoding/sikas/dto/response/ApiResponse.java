@@ -10,6 +10,28 @@ Created on 11/18/2025 6:05 PM
 Version 1.0
 */
 
-public class ApiResponse {
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import java.time.Instant;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class ApiResponse<T> {
+
+    private boolean success;
+    private String message;
+    private int status;
+    private Instant timestamp;
+    private T data;
+
+    public ApiResponse(boolean success, String message, int status, T data) {
+        this.success = success;
+        this.message = message;
+        this.status = status;
+        this.timestamp = Instant.now();
+        this.data = data;
+    }
 }

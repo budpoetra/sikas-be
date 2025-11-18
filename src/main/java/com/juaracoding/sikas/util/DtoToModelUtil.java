@@ -14,11 +14,11 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 
 @Component
-public class MapToModelUtil {
+public class DtoToModelUtil {
 
     private static ModelMapper modelMapper = new ModelMapper();
 
-    public MapToModelUtil(ModelMapper modelMapper) {
+    public DtoToModelUtil(ModelMapper modelMapper) {
         this.modelMapper = modelMapper;
     }
 
@@ -30,7 +30,7 @@ public class MapToModelUtil {
      * @param <S> Source class
      * @param <T> Target class
      */
-    public static <S, T> T mapTo(S source, Class<T> targetClass) {
+    public static <S, T> T map(S source, Class<T> targetClass) {
         return modelMapper.map(source, targetClass);
     }
 }

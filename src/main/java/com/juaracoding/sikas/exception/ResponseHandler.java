@@ -1,4 +1,4 @@
-package com.juaracoding.sikas.handler;
+package com.juaracoding.sikas.exception;
 
 /*
 IntelliJ IDEA 2025.2.4 (Ultimate Edition)
@@ -10,56 +10,29 @@ Created on 11/16/2025 1:16 PM
 Version 1.0
 */
 
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.context.request.WebRequest;
 
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public class ResponseHandler {
 
-    public ResponseEntity<Object> handleResponse(
-            String message,
+    public static ResponseEntity<Object> handleResponse(
             HttpStatus status,
-            Object data,
-            Object errorCode,
-            HttpServletRequest request
+            String message,
+            Object data
     ){
 
-        Map<String,Object> m = new HashMap<>();
-        m.put("message",message);
-        m.put("status",status.value());
-        m.put("data",data==null?"":data);
+        Map<String, Object> m = new HashMap<>();
+        m.put("status", status.value());
+        m.put("success", !status.isError());
+        m.put("message", message);
         m.put("timestamp", Instant.now().toString());
-        m.put("success",!status.isError());
-        if(errorCode!=null){
-            m.put("error_code",errorCode);
-            m.put("path",request.getRequestURI());
-        }
-        return new ResponseEntity<>(m,status);
-    }
+        m.put("data", data);
 
-    public ResponseEntity<Object> handleResponse(
-            String message,
-            HttpStatus status,
-            Object data,
-            Object errorCode,
-            WebRequest request
-    ){
-
-        Map<String,Object> m = new HashMap<>();
-        m.put("message",message);
-        m.put("status",status.value());
-        m.put("data",data==null?"":data);
-        m.put("timestamp", Instant.now().toString());
-        m.put("success",!status.isError());
-        if(errorCode!=null){
-            m.put("error_code",errorCode);
-            m.put("path",request.getContextPath());
-        }
         return new ResponseEntity<>(m,status);
     }
 }

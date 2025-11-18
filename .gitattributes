@@ -1,0 +1,6 @@
+* text=auto eol=lf
+
+*.cmd text eol=crlf
+
+/mvnw text eol=lf
+/mvnw.cmd text eol=crlf
