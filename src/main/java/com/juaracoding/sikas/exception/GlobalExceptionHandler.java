@@ -10,25 +10,57 @@ Created on 11/16/2025 12:06 PM
 Version 1.0
 */
 
-import com.juaracoding.sikas.util.LoggingFile;
-import com.juaracoding.sikas.util.RequestCapture;
-import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.security.authentication.BadCredentialsException;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestControllerAdvice
-@Configuration
-public class GlobalExceptionHandling extends ResponseEntityExceptionHandler {
+public class GlobalExceptionHandler {
 
-    private static final String CLASS_NAME = "";
-
-    public ResponseEntity<Object> handleExceptionInternal(Exception ex, Object body, HttpHeaders headers, HttpStatus status, HttpServletRequest request) {
-        LoggingFile.logException(CLASS_NAME,"handleExceptionInternal(Exception ex, Object body, HttpHeaders headers, HttpStatus status, HttpServletRequest request) "+ RequestCapture.allRequest(request),ex);
-        return new ResponseHandler().handleResponse("Terjadi Kesalahan Di Server",status,null,"X05999", request);
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Object> handleJsonError(HttpMessageNotReadableException e) {
+        return ResponseHandler.handleResponse(
+                HttpStatus.BAD_REQUEST,
+                "Malformed JSON request",
+                null
+        );
     }
 
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Object> handleValidationErrors(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getFieldErrors().forEach(error ->
+                errors.put(error.getField(), error.getDefaultMessage())
+        );
+
+        return ResponseHandler.handleResponse(
+                HttpStatus.BAD_REQUEST,
+                "Validation failed",
+                errors
+        );
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<Object> handleBadCredentials(BadCredentialsException ex) {
+        return ResponseHandler.handleResponse(
+                HttpStatus.UNAUTHORIZED,
+                "Invalid username or password",
+                null
+        );
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Object> handleGeneralError(Exception e) {
+        return ResponseHandler.handleResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "An unexpected error occurred",
+                null
+        );
+    }
 }

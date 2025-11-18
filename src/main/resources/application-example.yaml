@@ -5,16 +5,16 @@ spring:
   application:
     name: SIKAS
   datasource:
-    url:
-    username:
-    password:
+    url: your-database-url-here
+    username: your-database-username-here
+    password:  your-database-password-here
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
   jpa:
     hibernate:
       ddl-auto: create
       naming:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
-    show-sql: true
+    show-sql: false
     defer-datasource-initialization: true
     properties:
       hibernate:
@@ -26,5 +26,7 @@ spring:
       mode: always
 
 jwt:
-  secret: your_jwt_secret_key
+  secret: your-jwt-secret-key-here
   expiration: 3600000 # 1 hour in milliseconds
+  refresh-secret: your-jwt-refresh-secret-key-here
+  refresh-expiration: 86400000 # 24 hours in milliseconds
