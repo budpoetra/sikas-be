@@ -10,6 +10,15 @@ Created on 11/17/2025 4:27 PM
 Version 1.0
 */
 
+import org.modelmapper.ModelMapper;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
 public class ModelMapperConfig {
 
+    @Bean
+    public ModelMapper modelMapper() {
+        return new ModelMapper();
+    }
 }
