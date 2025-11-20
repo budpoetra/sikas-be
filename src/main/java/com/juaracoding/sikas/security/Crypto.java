@@ -60,8 +60,8 @@ public class Crypto {
     }
 
     public static void main(String[] args) {
-        //put text to encrypt in here
-        String strToEncrypt = "";
+        // Put text to encrypt in here
+        String strToEncrypt = "text to encrypt";
 
         System.out.println("Encryption Result : "+performEncrypt(strToEncrypt));
     }
