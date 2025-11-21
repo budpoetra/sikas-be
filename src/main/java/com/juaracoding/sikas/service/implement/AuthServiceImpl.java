@@ -15,6 +15,7 @@ import com.juaracoding.sikas.dto.response.ApiResponse;
 import com.juaracoding.sikas.dto.response.AuthResponse;
 import com.juaracoding.sikas.model.User;
 import com.juaracoding.sikas.model.UserToken;
+import com.juaracoding.sikas.repository.UserRepository;
 import com.juaracoding.sikas.repository.UserTokenRepository;
 import com.juaracoding.sikas.security.UserDetailsImpl;
 import com.juaracoding.sikas.service.AuthService;
@@ -29,6 +30,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -37,20 +39,22 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Service
 @Slf4j
+@Service
 public class AuthServiceImpl implements AuthService {
 
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final UserTokenRepository userTokenRepository;
+    private final UserRepository userRepository;
 
     public AuthServiceImpl(AuthenticationManager authenticationManager,
                            JwtUtil jwtUtil,
-                           UserTokenRepository userTokenRepository) {
+                           UserTokenRepository userTokenRepository, UserRepository userRepository) {
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
         this.userTokenRepository = userTokenRepository;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -148,5 +152,124 @@ public class AuthServiceImpl implements AuthService {
                     null
             );
         }
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<Object>> refreshToken(String refreshToken, HttpServletRequest request) {
+        try {
+            // Get existing token from database
+            UserToken oldToken = userTokenRepository.findByTokenAndTokenType(refreshToken, TokenType.REFRESH)
+                    .orElseThrow(() -> new Exception("Refresh token not found"));
+
+            if (!jwtUtil.validateRefreshToken(refreshToken)) {
+                oldToken.setExpired(true);
+                userTokenRepository.save(oldToken);
+
+                return ResponseFactory.error(
+                        "Invalid refresh token",
+                        HttpStatus.UNAUTHORIZED,
+                        null
+                );
+            }
+
+            String username = jwtUtil.getUsernameFromRefreshToken(oldToken.getToken());
+
+            User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new Exception("User not found"));
+
+            Integer userId = user.getId();
+
+            // Generate new access token
+            String newAccessToken = jwtUtil.generateToken(username);
+            LocalDateTime accessExpiredAt = jwtUtil.getAccessTokenExpiration(newAccessToken);
+
+            // Generate new refresh token
+            String newRefreshToken = jwtUtil.generateRefreshToken(username);
+            LocalDateTime refreshExpiredAt = jwtUtil.getRefreshTokenExpiration(newRefreshToken);
+
+            // Save new access token
+            List<UserToken> tokens = List.of(
+                    UserToken.builder()
+                            .userId(userId)
+                            .token(newAccessToken)
+                            .tokenType(TokenType.ACCESS)
+                            .expiredDate(accessExpiredAt)
+                            .expired(false)
+                            .revoked(false)
+                            .build(),
+
+                    UserToken.builder()
+                            .userId(userId)
+                            .token(newRefreshToken)
+                            .tokenType(TokenType.REFRESH)
+                            .expiredDate(refreshExpiredAt)
+                            .expired(false)
+                            .revoked(false)
+                            .build()
+            );
+            userTokenRepository.saveAll(tokens);
+
+            // Set old refresh token as revoked
+            oldToken.setRevoked(true);
+            userTokenRepository.save(oldToken);
+
+            // Get user roles
+            List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(user.getMasterUserType().getUserType()));
+
+            Set<String> roles = authorities.stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .collect(Collectors.toSet());
+
+
+            AuthResponse authResponse = new AuthResponse(
+                    newAccessToken,
+                    "Bearer",
+                    accessExpiredAt,
+                    username,
+                    roles
+            );
+
+            return ResponseFactory.success(
+                    "Token refreshed successfully",
+                    HttpStatus.OK,
+                    Map.of(
+                            "authResponse", authResponse,
+                            "newRefreshToken", newRefreshToken
+                    )
+            );
+
+        } catch (Exception ex) {
+            log.error("Refresh token failed: {}", ex.getMessage());
+            return ResponseFactory.error(
+                    "An error occurred while refreshing token",
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    null
+            );
+        }
+    }
+
+    @Override
+    public void logout(String refreshToken) {
+        // Revoke refresh token
+        userTokenRepository.findByTokenAndTokenType(refreshToken, TokenType.REFRESH)
+                .ifPresent(oldToken -> {
+                    oldToken.setRevoked(true);
+                    userTokenRepository.save(oldToken);
+                });
+
+
+        // Revoke all access tokens for the user
+        String username = jwtUtil.getUsernameFromRefreshToken(refreshToken);
+        userRepository.findByUsername(username).ifPresent(user -> {
+            List<UserToken> accessTokens = userTokenRepository.findAllByUserIdAndTokenTypeAndExpiredFalse(
+                    user.getId(),
+                    TokenType.ACCESS
+            );
+
+            accessTokens.forEach(token -> {
+                token.setRevoked(true);
+            });
+            userTokenRepository.saveAll(accessTokens);
+        });
     }
 }

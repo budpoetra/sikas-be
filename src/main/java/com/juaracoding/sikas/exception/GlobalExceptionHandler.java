@@ -10,6 +10,7 @@ Created on 11/16/2025 12:06 PM
 Version 1.0
 */
 
+import io.jsonwebtoken.JwtException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -51,6 +52,15 @@ public class GlobalExceptionHandler {
         return ResponseHandler.handleResponse(
                 HttpStatus.UNAUTHORIZED,
                 "Invalid username or password",
+                null
+        );
+    }
+
+    @ExceptionHandler(JwtException.class)
+    public ResponseEntity<Object> handleJwtException(JwtException e) {
+        return ResponseHandler.handleResponse(
+                HttpStatus.UNAUTHORIZED,
+                "Invalid or expired JWT token",
                 null
         );
     }

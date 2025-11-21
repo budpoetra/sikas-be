@@ -13,6 +13,7 @@ Version 1.0
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.Collection;
 
 @Entity
 @Table(
@@ -82,5 +83,4 @@ public class User {
     protected void onUpdate() {
         updatedDate = LocalDateTime.now();
     }
-
 }
