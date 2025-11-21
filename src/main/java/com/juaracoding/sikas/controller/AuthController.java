@@ -68,7 +68,7 @@ public class AuthController {
                 .httpOnly(true)
                 .secure(true)
                 .sameSite("Strict")
-                .path("/api/v1/auth/refresh")
+                .path("/api/v1/auth")
                 .maxAge(refreshTokenExpiration / 1000)
                 .build();
 
@@ -82,5 +82,77 @@ public class AuthController {
         );
 
         return new ResponseEntity<>(finalResponse, serviceResponse.getStatusCode());
+    }
+
+    @PostMapping("/refresh-token")
+    public ResponseEntity<ApiResponse<Object>> refreshToken(
+            @CookieValue(name = "refresh_token") String refreshToken,
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) {
+        ResponseEntity<ApiResponse<Object>> serviceResponse = authService.refreshToken(
+                refreshToken,
+                request
+        );
+
+        ApiResponse<Object> body = serviceResponse.getBody();
+
+        if (body == null || body.getData() == null) {
+            return serviceResponse;
+        }
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> map = (Map<String, Object>) body.getData();
+
+        String newRefreshToken = (String) map.get("newRefreshToken");
+        AuthResponse authResponse = (AuthResponse) map.get("authResponse");
+
+        ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", newRefreshToken)
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("Strict")
+                .path("/api/v1/auth")
+                .maxAge(refreshTokenExpiration / 1000)
+                .build();
+
+        response.addHeader("Set-Cookie", refreshCookie.toString());
+
+        ApiResponse<Object> finalResponse = new ApiResponse<>(
+                body.isSuccess(),
+                body.getMessage(),
+                body.getStatus(),
+                authResponse
+        );
+
+        return new ResponseEntity<>(finalResponse, serviceResponse.getStatusCode());
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Object>> logout(
+            @CookieValue(name = "refresh_token", required = false) String refreshToken,
+            HttpServletResponse response
+    ) {
+        if (refreshToken != null && !refreshToken.isEmpty()) {
+            authService.logout(refreshToken);
+        }
+
+        ResponseCookie deleteCookie = ResponseCookie.from("refresh_token", "")
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("Strict")
+                .path("/api/v1/auth")
+                .maxAge(0)
+                .build();
+
+        response.addHeader("Set-Cookie", deleteCookie.toString());
+
+        ApiResponse<Object> apiResponse = new ApiResponse<>(
+                true,
+                "Logged out successfully",
+                HttpServletResponse.SC_OK,
+                null
+        );
+
+        return new ResponseEntity<>(apiResponse, org.springframework.http.HttpStatus.OK);
     }
 }

@@ -42,7 +42,7 @@ public class UserToken {
     )
     private User user;
 
-    @Column(name = "Token", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "Token", nullable = false, columnDefinition = "NVARCHAR(MAX)")
     private String token;
 
     @Enumerated(EnumType.STRING)
