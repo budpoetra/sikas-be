@@ -47,7 +47,7 @@ public class UserToken {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "TokenType", nullable = false, length = 10)
-    private TokenType tokenType = TokenType.ACCESS;
+    private TokenType tokenType = TokenType.REFRESH;
 
     @Column(name = "Expired", nullable = false)
     private boolean expired = false;

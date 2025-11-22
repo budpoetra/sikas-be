@@ -57,6 +57,12 @@ public class AuthServiceImpl implements AuthService {
         this.userRepository = userRepository;
     }
 
+    /**
+     * Login user and generate JWT tokens
+     * Platform Code: AUT
+     * Module Code: 001
+     * Quota Code: 01 - 10
+     */
     @Override
     public ResponseEntity<ApiResponse<Object>> login(User user, HttpServletRequest request) {
 
@@ -83,28 +89,16 @@ public class AuthServiceImpl implements AuthService {
 
             User loggedInUser = ((UserDetailsImpl) auth.getPrincipal()).getUser();
 
-            // Save tokens
-            List<UserToken> tokens = List.of(
-                    UserToken.builder()
-                            .userId(loggedInUser.getId())
-                            .token(accessToken)
-                            .tokenType(TokenType.ACCESS)
-                            .expiredDate(accessExpiredAt)
-                            .expired(false)
-                            .revoked(false)
-                            .build(),
-
-                    UserToken.builder()
-                            .userId(loggedInUser.getId())
-                            .token(refreshToken)
-                            .tokenType(TokenType.REFRESH)
-                            .expiredDate(refreshExpiredAt)
-                            .expired(false)
-                            .revoked(false)
-                            .build()
-            );
-
-            userTokenRepository.saveAll(tokens);
+            // Save refresh token to database
+            UserToken refreshUserToken = UserToken.builder()
+                    .userId(loggedInUser.getId())
+                    .token(refreshToken)
+                    .tokenType(TokenType.REFRESH)
+                    .expiredDate(refreshExpiredAt)
+                    .expired(false)
+                    .revoked(false)
+                    .build();
+            userTokenRepository.save(refreshUserToken);
 
             AuthResponse authResponse = new AuthResponse(
                     accessToken,
@@ -124,49 +118,68 @@ public class AuthServiceImpl implements AuthService {
             );
 
         } catch (BadCredentialsException ex) {
+            log.error("AUT001E01 - Invalid username or password: {}", ex.getMessage(), ex);
+
             return ResponseFactory.error(
-                    "Invalid username or password",
+                    "AUT001E01 - Invalid username or password",
                     HttpStatus.UNAUTHORIZED,
                     null
             );
 
         } catch (DisabledException ex) {
+            log.error("AUT001E02 - User account is disabled: {}", ex.getMessage(), ex);
+
             return ResponseFactory.error(
-                    "User account is disabled",
+                    "AUT001E02 - User account is disabled",
                     HttpStatus.FORBIDDEN,
                     null
             );
 
         } catch (LockedException ex) {
+            log.error("AUT001E03 - User account is locked: {}", ex.getMessage(), ex);
+
             return ResponseFactory.error(
-                    "User account is locked",
+                    "AUT001E03 - User account is locked",
                     HttpStatus.FORBIDDEN,
                     null
             );
 
         } catch (Exception ex) {
-            log.error("Login failed: {}", ex.getMessage());
+            log.error("AUT001E10 - An unexpected error occurred during login: {}", ex.getMessage(), ex);
+
             return ResponseFactory.error(
-                    "An error occurred during login",
+                    "AUT001E10 - An unexpected error occurred during login",
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     null
             );
         }
     }
 
+    /**
+     * Refresh JWT tokens using refresh token
+     * Platform Code: AUT
+     * Module Code: 001
+     * Quota Code: 11 - 20
+     */
     @Override
     public ResponseEntity<ApiResponse<Object>> refreshToken(String refreshToken, HttpServletRequest request) {
         try {
             // Get existing token from database
             UserToken oldToken = userTokenRepository.findByTokenAndTokenType(refreshToken, TokenType.REFRESH)
-                    .orElseThrow(() -> new Exception("Refresh token not found"));
+                    .orElseThrow(() -> {
+                        log.warn("AUT001W11 - Refresh token not found in database");
+
+                        return new Exception("AUT001W11 - Refresh token not found");
+                    });
 
             if (!jwtUtil.validateRefreshToken(refreshToken)) {
+                log.warn("AUT001W12 - Invalid or expired refresh token");
+
                 oldToken.setExpired(true);
                 userTokenRepository.save(oldToken);
 
                 return ResponseFactory.error(
-                        "Invalid refresh token",
+                        "Auth001W12 - Invalid or expired refresh token",
                         HttpStatus.UNAUTHORIZED,
                         null
                 );
@@ -175,7 +188,11 @@ public class AuthServiceImpl implements AuthService {
             String username = jwtUtil.getUsernameFromRefreshToken(oldToken.getToken());
 
             User user = userRepository.findByUsername(username)
-                    .orElseThrow(() -> new Exception("User not found"));
+                    .orElseThrow(() -> {
+                        log.warn("AUT001W13 - User not found for username: {}", username);
+
+                        return new Exception("AUT001W13 - User not found");
+                    });
 
             Integer userId = user.getId();
 
@@ -187,27 +204,16 @@ public class AuthServiceImpl implements AuthService {
             String newRefreshToken = jwtUtil.generateRefreshToken(username);
             LocalDateTime refreshExpiredAt = jwtUtil.getRefreshTokenExpiration(newRefreshToken);
 
-            // Save new access token
-            List<UserToken> tokens = List.of(
-                    UserToken.builder()
-                            .userId(userId)
-                            .token(newAccessToken)
-                            .tokenType(TokenType.ACCESS)
-                            .expiredDate(accessExpiredAt)
-                            .expired(false)
-                            .revoked(false)
-                            .build(),
-
-                    UserToken.builder()
-                            .userId(userId)
-                            .token(newRefreshToken)
-                            .tokenType(TokenType.REFRESH)
-                            .expiredDate(refreshExpiredAt)
-                            .expired(false)
-                            .revoked(false)
-                            .build()
-            );
-            userTokenRepository.saveAll(tokens);
+            // Save new refresh token to database
+            UserToken newUserToken = UserToken.builder()
+                    .userId(userId)
+                    .token(newRefreshToken)
+                    .tokenType(TokenType.REFRESH)
+                    .expiredDate(refreshExpiredAt)
+                    .expired(false)
+                    .revoked(false)
+                    .build();
+            userTokenRepository.save(newUserToken);
 
             // Set old refresh token as revoked
             oldToken.setRevoked(true);
@@ -239,37 +245,33 @@ public class AuthServiceImpl implements AuthService {
             );
 
         } catch (Exception ex) {
-            log.error("Refresh token failed: {}", ex.getMessage());
+            log.error("AUT001E20 - An error occurred while refreshing token: {}", ex.getMessage(), ex);
+
             return ResponseFactory.error(
-                    "An error occurred while refreshing token",
+                    "AUT001E20 - An error occurred while refreshing token",
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     null
             );
         }
     }
 
+    /**
+     * Logout user by revoking the refresh token
+     * Platform Code: AUT
+     * Module Code: 001
+     * Quota Code: 21 - 30
+     */
     @Override
     public void logout(String refreshToken) {
-        // Revoke refresh token
-        userTokenRepository.findByTokenAndTokenType(refreshToken, TokenType.REFRESH)
-                .ifPresent(oldToken -> {
-                    oldToken.setRevoked(true);
-                    userTokenRepository.save(oldToken);
-                });
+        try {
+            userTokenRepository.findByTokenAndTokenType(refreshToken, TokenType.REFRESH)
+                    .ifPresent(oldToken -> {
+                        oldToken.setRevoked(true);
+                        userTokenRepository.save(oldToken);
+                    });
+        } catch (Exception ex) {
+            log.error("AUT001E30 - An error occurred during logout: {}", ex.getMessage(), ex);
+        }
 
-
-        // Revoke all access tokens for the user
-        String username = jwtUtil.getUsernameFromRefreshToken(refreshToken);
-        userRepository.findByUsername(username).ifPresent(user -> {
-            List<UserToken> accessTokens = userTokenRepository.findAllByUserIdAndTokenTypeAndExpiredFalse(
-                    user.getId(),
-                    TokenType.ACCESS
-            );
-
-            accessTokens.forEach(token -> {
-                token.setRevoked(true);
-            });
-            userTokenRepository.saveAll(accessTokens);
-        });
     }
 }

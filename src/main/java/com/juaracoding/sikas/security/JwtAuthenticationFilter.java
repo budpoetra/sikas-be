@@ -10,8 +10,6 @@ Created on 11/15/2025 11:24 AM
 Version 1.0
 */
 
-import com.juaracoding.sikas.model.UserToken;
-import com.juaracoding.sikas.service.UserTokenService;
 import com.juaracoding.sikas.util.ResponseFactory;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -25,14 +23,24 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+
+/**
+ * JWT Authentication Filter
+ * Platform Code: JAF
+ * Module Code: 000
+ * Quota Code: -
+ */
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+
     private final JwtUtil jwtUtil;
     private final UserDetailsServiceImpl userDetailsService;
-    private final UserTokenService userTokenService;
 
     @Override
     protected void doFilterInternal(
@@ -48,23 +56,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        if (!userTokenService.isTokenSafe(token)) {
-            logger.info("Unsafe token detected: " + token);
-
-            ResponseFactory.errorFilter(
-                    "Invalid or revoked token",
-                    HttpServletResponse.SC_UNAUTHORIZED,
-                    response
-            );
-            return;
-        }
-
         if (!jwtUtil.validateToken(token)) {
-            userTokenService.findByToken(token)
-                    .ifPresent(ut -> {
-                        ut.setExpired(true);
-                        userTokenService.save(ut);
-                    });
+            log.warn("JAF000W01 - Invalid or expired token");
 
             ResponseFactory.errorFilter(
                     "Invalid or expired token",
@@ -76,6 +69,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String username = jwtUtil.getUsername(token);
         if (username == null) {
+            log.warn("JAF000W02 - Invalid token structure");
+
             ResponseFactory.errorFilter(
                     "Invalid token structure",
                     HttpServletResponse.SC_UNAUTHORIZED,
@@ -85,12 +80,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         if (SecurityContextHolder.getContext().getAuthentication() == null) {
-
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
             // Validate token signature + expiration
             if (jwtUtil.isValidToken(token, userDetails.getUsername())) {
-
                 UsernamePasswordAuthenticationToken authToken =
                         new UsernamePasswordAuthenticationToken(
                                 userDetails,
