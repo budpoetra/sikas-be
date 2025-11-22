@@ -4,10 +4,12 @@ server:
 spring:
   application:
     name: SIKAS
+  profiles:
+    active: dev  # Change to 'prod' for production environment
   datasource:
-    url: your-database-url-here
-    username: your-database-username-here
-    password:  your-database-password-here
+    url: your_encrypted_database_url_here
+    username: your_encrypted_database_username_here
+    password: your_encrypted_database_password_here
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
   jpa:
     hibernate:
@@ -26,7 +28,13 @@ spring:
       mode: always
 
 jwt:
-  secret: your-jwt-secret-key-here
-  expiration: 3600000 # 1 hour in milliseconds
-  refresh-secret: your-jwt-refresh-secret-key-here
+  secret: your_jwt_secret_here
+  expiration: 900000 # 15 minutes in milliseconds
+  refresh-secret: your_jwt_refresh_secret_here
   refresh-expiration: 86400000 # 24 hours in milliseconds
+
+logging:
+  level:
+    root: INFO
+    app: DEBUG
+  mask-sensitive: false

@@ -10,6 +10,7 @@ Created on 11/15/2025 11:33 AM
 Version 1.0
 */
 
+import com.juaracoding.sikas.annotation.Loggable;
 import com.juaracoding.sikas.dto.response.ApiResponse;
 import com.juaracoding.sikas.dto.validation.LoginDTO;
 import com.juaracoding.sikas.dto.response.AuthResponse;
@@ -19,6 +20,7 @@ import com.juaracoding.sikas.util.DtoToModelUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
@@ -27,6 +29,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthController {
@@ -42,6 +45,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
+    @Loggable
     public ResponseEntity<ApiResponse<Object>> login(
             @Valid @RequestBody LoginDTO dto,
             HttpServletRequest request,
@@ -85,6 +89,7 @@ public class AuthController {
     }
 
     @PostMapping("/refresh-token")
+    @Loggable
     public ResponseEntity<ApiResponse<Object>> refreshToken(
             @CookieValue(name = "refresh_token") String refreshToken,
             HttpServletRequest request,
@@ -128,6 +133,7 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
+    @Loggable
     public ResponseEntity<ApiResponse<Object>> logout(
             @CookieValue(name = "refresh_token", required = false) String refreshToken,
             HttpServletResponse response

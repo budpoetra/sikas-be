@@ -10,6 +10,7 @@ Created on 11/15/2025 11:23 AM
 Version 1.0
 */
 
+import com.juaracoding.sikas.util.ResponseFactory;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.AuthenticationException;
@@ -24,10 +25,13 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
     public void commence(HttpServletRequest request,
                          HttpServletResponse response,
                          AuthenticationException authException) throws IOException {
-        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+        response.setContentType("application/json");
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 
-        response.getWriter().write(
-                "{\"error\": \"" + authException.getMessage() + "\"}"
+        ResponseFactory.errorFilter(
+                "Unauthorized: " + authException.getMessage(),
+                HttpServletResponse.SC_UNAUTHORIZED,
+                response
         );
     }
 }

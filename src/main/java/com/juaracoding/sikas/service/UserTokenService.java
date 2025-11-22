@@ -14,6 +14,10 @@ import com.juaracoding.sikas.model.UserToken;
 
 import java.util.Optional;
 
+/**
+ * Platform Code: UST
+ * Module Code: 002
+ */
 public interface UserTokenService {
     boolean isTokenSafe(String token);
     void save(UserToken userToken);
