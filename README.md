@@ -14,7 +14,7 @@ Pastikan Anda telah menginstal:
 ### 2. Clone Repository
 
 ``` bash
-    git clone git@github.com:budpoetra/sikas-be.git
+git clone git@github.com:budpoetra/sikas-be.git
 ```
 
 ### 3. Buka Proyek
@@ -64,32 +64,38 @@ spring:
   datasource:
     url: "HASIL_ENKRIPSI_URL"
 ```
+atau
+
+``` properties
+spring.datasource.url=HASIL_ENKRIPSI_URL
+```
 
 ### 7. Enkripsi Username & Password
 
-Lakukan langkah yang sama untuk: - `spring.datasource.username` -
-`spring.datasource.password`
+Lakukan langkah yang sama untuk: 
+- `spring.datasource.username` 
+- `spring.datasource.password`
 
 ### 8. Build dan Jalankan Aplikasi
 
 Build proyek:
 
 ``` bash
-    mvn install
+mvn install
 ```
 
 Jalankan aplikasi:
 
 ``` bash
-    mvn spring-boot:run
+mvn spring-boot:run
 ```
 
 ## Developers
 
--   Kristo --- github.com/\
+-   Kristo
 -   [Budi Sahputra](https://github.com/budpoetra)
--   M. Fadli --- github.com/\
--   Daffa --- github.com/\
--   Fauzi --- github.com/
+-   M. Fadli
+-   Daffa
+-   Fauzi
 
 **Juara Coding 2025**

@@ -10,6 +10,7 @@ Created on 11/15/2025 11:33 AM
 Version 1.0
 */
 
+import com.juaracoding.sikas.annotation.Loggable;
 import com.juaracoding.sikas.dto.response.ApiResponse;
 import com.juaracoding.sikas.dto.validation.LoginDTO;
 import com.juaracoding.sikas.dto.response.AuthResponse;
@@ -19,6 +20,7 @@ import com.juaracoding.sikas.util.DtoToModelUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
@@ -27,6 +29,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthController {
@@ -42,6 +45,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
+    @Loggable
     public ResponseEntity<ApiResponse<Object>> login(
             @Valid @RequestBody LoginDTO dto,
             HttpServletRequest request,
@@ -68,7 +72,7 @@ public class AuthController {
                 .httpOnly(true)
                 .secure(true)
                 .sameSite("Strict")
-                .path("/api/v1/auth/refresh")
+                .path("/api/v1/auth")
                 .maxAge(refreshTokenExpiration / 1000)
                 .build();
 
@@ -82,5 +86,79 @@ public class AuthController {
         );
 
         return new ResponseEntity<>(finalResponse, serviceResponse.getStatusCode());
+    }
+
+    @PostMapping("/refresh-token")
+    @Loggable
+    public ResponseEntity<ApiResponse<Object>> refreshToken(
+            @CookieValue(name = "refresh_token") String refreshToken,
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) {
+        ResponseEntity<ApiResponse<Object>> serviceResponse = authService.refreshToken(
+                refreshToken,
+                request
+        );
+
+        ApiResponse<Object> body = serviceResponse.getBody();
+
+        if (body == null || body.getData() == null) {
+            return serviceResponse;
+        }
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> map = (Map<String, Object>) body.getData();
+
+        String newRefreshToken = (String) map.get("newRefreshToken");
+        AuthResponse authResponse = (AuthResponse) map.get("authResponse");
+
+        ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", newRefreshToken)
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("Strict")
+                .path("/api/v1/auth")
+                .maxAge(refreshTokenExpiration / 1000)
+                .build();
+
+        response.addHeader("Set-Cookie", refreshCookie.toString());
+
+        ApiResponse<Object> finalResponse = new ApiResponse<>(
+                body.isSuccess(),
+                body.getMessage(),
+                body.getStatus(),
+                authResponse
+        );
+
+        return new ResponseEntity<>(finalResponse, serviceResponse.getStatusCode());
+    }
+
+    @PostMapping("/logout")
+    @Loggable
+    public ResponseEntity<ApiResponse<Object>> logout(
+            @CookieValue(name = "refresh_token", required = false) String refreshToken,
+            HttpServletResponse response
+    ) {
+        if (refreshToken != null && !refreshToken.isEmpty()) {
+            authService.logout(refreshToken);
+        }
+
+        ResponseCookie deleteCookie = ResponseCookie.from("refresh_token", "")
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("Strict")
+                .path("/api/v1/auth")
+                .maxAge(0)
+                .build();
+
+        response.addHeader("Set-Cookie", deleteCookie.toString());
+
+        ApiResponse<Object> apiResponse = new ApiResponse<>(
+                true,
+                "Logged out successfully",
+                HttpServletResponse.SC_OK,
+                null
+        );
+
+        return new ResponseEntity<>(apiResponse, org.springframework.http.HttpStatus.OK);
     }
 }

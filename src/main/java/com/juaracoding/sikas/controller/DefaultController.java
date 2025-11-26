@@ -13,7 +13,6 @@ Version 1.0
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
@@ -24,9 +23,14 @@ public class DefaultController {
 
     @GetMapping("/")
     public ResponseEntity<Object> defaultRoute() {
-        Map<String,Object> m = new HashMap<>();
-        m.put("message","Welcome to SIKAS API");
-        return ResponseEntity.ok(m);
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "Welcome to SIKAS API");
+        response.put("status", 200);
+        response.put("data", null);
+
+        return ResponseEntity.ok(response);
+
     }
 
     @GetMapping("/api/v1/show-token")

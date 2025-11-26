@@ -42,12 +42,12 @@ public class UserToken {
     )
     private User user;
 
-    @Column(name = "Token", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "Token", nullable = false, columnDefinition = "NVARCHAR(MAX)")
     private String token;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "TokenType", nullable = false, length = 10)
-    private TokenType tokenType = TokenType.ACCESS;
+    private TokenType tokenType = TokenType.REFRESH;
 
     @Column(name = "Expired", nullable = false)
     private boolean expired = false;

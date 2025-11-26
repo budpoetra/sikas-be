@@ -15,6 +15,12 @@ import com.juaracoding.sikas.model.User;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 
+/**
+ * Platform Code: AUT
+ * Module Code: 001
+ */
 public interface AuthService {
     ResponseEntity<ApiResponse<Object>> login(User user, HttpServletRequest request);
+    ResponseEntity<ApiResponse<Object>> refreshToken(String refreshToken, HttpServletRequest request);
+    void logout(String refreshToken);
 }
