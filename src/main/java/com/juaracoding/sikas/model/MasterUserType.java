@@ -10,9 +10,11 @@ Created on 11/11/2025 1:40 PM
 Version 1.0
 */
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(
@@ -37,6 +39,15 @@ public class MasterUserType {
 
     @Column(name = "CreatedDate", nullable = false, updatable = false)
     private LocalDateTime createdDate;
+
+    @OneToMany(
+            mappedBy = "masterUserType",
+            fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    @JsonManagedReference
+    private List<UserTypePermission> permissions;
 
     @Column(name = "UpdatedDate", nullable = false)
     private LocalDateTime updatedDate;

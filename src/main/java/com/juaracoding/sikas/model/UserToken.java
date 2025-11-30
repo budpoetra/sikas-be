@@ -47,7 +47,7 @@ public class UserToken {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "TokenType", nullable = false, length = 10)
-    private TokenType tokenType = TokenType.REFRESH;
+    private TokenType tokenType = TokenType.ACCESS;
 
     @Column(name = "Expired", nullable = false)
     private boolean expired = false;
@@ -66,6 +66,7 @@ public class UserToken {
         createdDate = LocalDateTime.now();
     }
 
+    @Transient
     public boolean isValid() {
         return !expired && !revoked && expiredDate.isAfter(LocalDateTime.now());
     }

@@ -10,6 +10,7 @@ Created on 11/15/2025 11:24 AM
 Version 1.0
 */
 
+import com.juaracoding.sikas.service.UserTokenService;
 import com.juaracoding.sikas.util.ResponseFactory;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -41,6 +42,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final UserDetailsServiceImpl userDetailsService;
+    private final UserTokenService userTokenService;
 
     @Override
     protected void doFilterInternal(
@@ -56,8 +58,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
+        if(!userTokenService.isTokenSafe(token)) {
+            log.warn("JAF000W01 - Token is revoked or expired");
+
+            ResponseFactory.errorFilter(
+                    "Token is revoked or expired",
+                    HttpServletResponse.SC_UNAUTHORIZED,
+                    response
+            );
+            return;
+        }
+
         if (!jwtUtil.validateToken(token)) {
-            log.warn("JAF000W01 - Invalid or expired token");
+            log.warn("JAF000W02 - Invalid or expired token");
 
             ResponseFactory.errorFilter(
                     "Invalid or expired token",
@@ -69,7 +82,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String username = jwtUtil.getUsername(token);
         if (username == null) {
-            log.warn("JAF000W02 - Invalid token structure");
+            log.warn("JAF000W03 - Invalid token structure");
 
             ResponseFactory.errorFilter(
                     "Invalid token structure",

@@ -19,7 +19,10 @@ import java.util.Optional;
 
 public interface UserTokenRepository extends JpaRepository<UserToken, Integer> {
     boolean existsByTokenAndExpiredFalseAndRevokedFalse(String token);
+
     Optional<UserToken> findByTokenAndTokenType(String token, TokenType tokenType);
+
     Optional<UserToken> findByToken(String token);
-    List<UserToken> findAllByUserIdAndTokenTypeAndExpiredFalse(Integer userId, TokenType tokenType);
+
+    List<UserToken> findAllByUserIdAndTokenTypeAndRevokedFalse(Integer userId, TokenType tokenType);
 }
