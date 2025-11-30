@@ -24,6 +24,7 @@ import com.juaracoding.sikas.security.JwtUtil;
 import com.juaracoding.sikas.util.ResponseFactory;
 import jakarta.servlet.http.HttpServletRequest;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -41,21 +42,13 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final UserTokenRepository userTokenRepository;
     private final UserRepository userRepository;
-
-    public AuthServiceImpl(AuthenticationManager authenticationManager,
-                           JwtUtil jwtUtil,
-                           UserTokenRepository userTokenRepository, UserRepository userRepository) {
-        this.authenticationManager = authenticationManager;
-        this.jwtUtil = jwtUtil;
-        this.userTokenRepository = userTokenRepository;
-        this.userRepository = userRepository;
-    }
 
     /**
      * Login user and generate JWT tokens
@@ -89,16 +82,26 @@ public class AuthServiceImpl implements AuthService {
 
             User loggedInUser = ((UserDetailsImpl) auth.getPrincipal()).getUser();
 
-            // Save refresh token to database
-            UserToken refreshUserToken = UserToken.builder()
-                    .userId(loggedInUser.getId())
-                    .token(refreshToken)
-                    .tokenType(TokenType.REFRESH)
-                    .expiredDate(refreshExpiredAt)
-                    .expired(false)
-                    .revoked(false)
-                    .build();
-            userTokenRepository.save(refreshUserToken);
+            // Save access token and refresh token to database
+            List<UserToken> tokensToSave = List.of(
+                    UserToken.builder()
+                            .userId(loggedInUser.getId())
+                            .token(accessToken)
+                            .tokenType(TokenType.ACCESS)
+                            .expiredDate(accessExpiredAt)
+                            .expired(false)
+                            .revoked(false)
+                            .build(),
+                    UserToken.builder()
+                            .userId(loggedInUser.getId())
+                            .token(refreshToken)
+                            .tokenType(TokenType.REFRESH)
+                            .expiredDate(refreshExpiredAt)
+                            .expired(false)
+                            .revoked(false)
+                            .build()
+            );
+            userTokenRepository.saveAll(tokensToSave);
 
             AuthResponse authResponse = new AuthResponse(
                     accessToken,
@@ -268,6 +271,17 @@ public class AuthServiceImpl implements AuthService {
                     .ifPresent(oldToken -> {
                         oldToken.setRevoked(true);
                         userTokenRepository.save(oldToken);
+                    });
+
+            // Revoke all access tokens associated with the user of the refresh token
+            userTokenRepository.findByTokenAndTokenType(refreshToken, TokenType.REFRESH)
+                    .ifPresent(oldRefreshToken -> {
+                        Integer userId = oldRefreshToken.getUserId();
+                        List<UserToken> accessTokens = userTokenRepository.findAllByUserIdAndTokenTypeAndRevokedFalse(userId, TokenType.ACCESS);
+                        for (UserToken accessToken : accessTokens) {
+                            accessToken.setRevoked(true);
+                        }
+                        userTokenRepository.saveAll(accessTokens);
                     });
         } catch (Exception ex) {
             log.error("AUT001E30 - An error occurred during logout: {}", ex.getMessage(), ex);

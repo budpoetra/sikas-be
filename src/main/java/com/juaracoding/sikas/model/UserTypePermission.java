@@ -10,6 +10,7 @@ Created on 11/13/2025 12:47 PM
 Version 1.0
 */
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -28,7 +29,7 @@ public class UserTypePermission {
     private Integer id;
 
     @Column(name = "UserTypeId", nullable = false)
-    private Integer idUserType;
+    private Integer userTypeId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
@@ -38,10 +39,11 @@ public class UserTypePermission {
             updatable = false,
             foreignKey = @ForeignKey(name = "FK_UserTypePermission_MasterUserType")
     )
+    @JsonBackReference
     private MasterUserType masterUserType;
 
     @Column(name = "FeatureId", nullable = false)
-    private Integer idFeature;
+    private Integer featureId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(

@@ -10,15 +10,11 @@ Created on 11/18/2025 6:05 PM
 Version 1.0
 */
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class ApiResponse<T> {
 
     private boolean success;

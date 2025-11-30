@@ -13,7 +13,6 @@ Version 1.0
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
-import java.util.Collection;
 
 @Entity
 @Table(
@@ -65,6 +64,16 @@ public class User {
 
     @Column(name = "Status", nullable = false)
     private Byte status; // 0 = Inactive, 1 = Active
+
+    @Transient
+    public String getStatusName() {
+        return switch (status) {
+            case 0 -> "Inactive";
+            case 1 -> "Active";
+            default -> "Unknown";
+        };
+    }
+
 
     @Column(name = "CreatedDate", nullable = false, updatable = false)
     private LocalDateTime createdDate;
