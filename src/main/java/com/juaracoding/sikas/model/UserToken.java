@@ -47,12 +47,15 @@ public class UserToken {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "TokenType", nullable = false, length = 10)
+    @Builder.Default
     private TokenType tokenType = TokenType.ACCESS;
 
     @Column(name = "Expired", nullable = false)
+    @Builder.Default
     private boolean expired = false;
 
     @Column(name = "Revoked", nullable = false)
+    @Builder.Default
     private boolean revoked = false;
 
     @Column(name = "CreatedDate", nullable = false, updatable = false)
@@ -64,10 +67,5 @@ public class UserToken {
     @PrePersist
     protected void onCreate() {
         createdDate = LocalDateTime.now();
-    }
-
-    @Transient
-    public boolean isValid() {
-        return !expired && !revoked && expiredDate.isAfter(LocalDateTime.now());
     }
 }

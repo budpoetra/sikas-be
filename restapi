@@ -1,0 +1,44 @@
+## Login ##
+http://localhost:8080/api/v1/auth/login
+{
+  "username": "superadmin",
+  "password": "12345qwert@Q"
+}
+
+## Kategories ##
+http://localhost:8080/api/v1/category
+{
+  "category": "Elektronik",
+  "createdBy": 1,
+  "updatedBy": 1
+}
+
+## Product ##
+http://localhost:8080/api/v1/product
+{
+  "categoryId": 1,
+  "productName": "Laptop XYZ",
+  "productCode": "LP123456",
+  "price": 15000000,
+  "barcode": "1234567890123",
+  "stock" : 10,
+  "status": 1
+}
+
+
+## user ##
+http://localhost:8080/api/v1/user
+{
+  "typeId": 1,
+  "fullName": "Muhammad Fadilah1",
+  "username": "fadilah",
+  "password": "password123",
+  "phone": "08123456789",
+  "email": "fadilah@example.com"
+}
+
+## Dashboard ##
+http://localhost:8080/api/v1/dashboard
+
+
+

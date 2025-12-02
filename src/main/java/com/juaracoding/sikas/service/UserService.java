@@ -10,6 +10,7 @@ Created on 11/27/2025 3:38 PM
 Version 1.0
 */
 
+import com.juaracoding.sikas.dto.validation.UserDTO;
 import com.juaracoding.sikas.dto.response.ApiResponse;
 import com.juaracoding.sikas.dto.validation.ChangePasswordDTO;
 import com.juaracoding.sikas.model.User;
@@ -25,7 +26,16 @@ import java.util.Optional;
 public interface UserService {
 
     Optional<User> findByUsername(String username);
+
     ResponseEntity<ApiResponse<Object>> getProfile(String username);
+
     ResponseEntity<ApiResponse<Object>> changePassword(ChangePasswordDTO dto, String username, HttpServletRequest request);
 
+    ApiResponse<?> createUser(UserDTO request);
+
+    ApiResponse<?> getUser(Integer id);
+
+    ApiResponse<?> updateUser(Integer id, UserDTO request);
+
+    ApiResponse<?> deleteUser(Integer id);
 }

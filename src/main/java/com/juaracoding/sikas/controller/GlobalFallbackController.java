@@ -16,6 +16,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Controller
 public class GlobalFallbackController {
 
@@ -27,8 +30,13 @@ public class GlobalFallbackController {
             RequestMethod.PATCH,
             RequestMethod.OPTIONS
     })
-    public ResponseEntity<String> fallback() {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body("Error 404: Path not found");
+    public ResponseEntity<Object> fallback() {
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", false);
+        response.put("message", "The requested resource was not found.");
+        response.put("status", HttpStatus.NOT_FOUND.value());
+        response.put("data", null);
+
+        return ResponseEntity.ok(response);
     }
 }
