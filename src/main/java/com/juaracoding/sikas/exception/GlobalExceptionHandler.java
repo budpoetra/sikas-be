@@ -73,4 +73,13 @@ public class GlobalExceptionHandler {
                 null
         );
     }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<Object> handleRuntimeException(RuntimeException e) {
+        return ResponseHandler.handleResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                e.getMessage(),
+                null
+        );
+    }
 }

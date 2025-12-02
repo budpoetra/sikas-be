@@ -10,6 +10,7 @@ Created on 11/26/2025 20:37
 Version 1.0
 */
 
+import com.juaracoding.sikas.annotation.Loggable;
 import com.juaracoding.sikas.dto.validation.UserDTO;
 import com.juaracoding.sikas.dto.response.ApiResponse;
 import com.juaracoding.sikas.service.UserService;
@@ -25,27 +26,31 @@ public class UserController {
 
     private final UserService userService;
 
+    @Loggable
     @PostMapping
-    public ResponseEntity<ApiResponse<?>> createUser(@Valid @RequestBody UserDTO req) {
-        return ResponseEntity.ok(userService.createUser(req));
+    public ResponseEntity<ApiResponse<Object>> createUser(@Valid @RequestBody UserDTO req) {
+        return userService.createUser(req);
     }
 
+    @Loggable
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<?>> getUser(@PathVariable Integer id) {
-        return ResponseEntity.ok(userService.getUser(id));
+    public ResponseEntity<ApiResponse<Object>> getUser(@PathVariable Integer id) {
+        return userService.getUser(id);
     }
 
+    @Loggable
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<?>> updateUser(
+    public ResponseEntity<ApiResponse<Object>> updateUser(
             @PathVariable Integer id,
             @Valid @RequestBody UserDTO req
     ) {
-        return ResponseEntity.ok(userService.updateUser(id, req));
+        return userService.updateUser(id, req);
     }
 
+    @Loggable
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<?>> deleteUser(@PathVariable Integer id) {
-        return ResponseEntity.ok(userService.deleteUser(id));
+    public ResponseEntity<ApiResponse<Object>> deleteUser(@PathVariable Integer id) {
+        return userService.deleteUser(id);
     }
 }
 

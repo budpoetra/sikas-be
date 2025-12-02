@@ -10,9 +10,9 @@ Created on 11/23/2025 19:12
 Version 1.0
 */
 
+import com.juaracoding.sikas.annotation.Loggable;
 import com.juaracoding.sikas.dto.validation.ProductDTO;
 import com.juaracoding.sikas.dto.response.ApiResponse;
-import com.juaracoding.sikas.dto.response.ProductResponse;
 import com.juaracoding.sikas.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,36 +27,24 @@ public class ProductController {
 
     private final ProductService service;
 
+    @Loggable
     @PostMapping
     public ResponseEntity<ApiResponse<Object>> create(
             @Valid @RequestBody ProductDTO request
     ) {
-        ProductResponse saved = service.create(request);
-
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new ApiResponse<>(
-                        true,
-                        "Product created successfully",
-                        HttpStatus.CREATED.value(),
-                        saved
-                ));
+        return service.create(request);
     }
 
+    @Loggable
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<Object>> update(
             @PathVariable Long id,
             @Valid @RequestBody ProductDTO request
     ) {
-        ProductResponse updated = service.update(id, request);
-
-        return ResponseEntity.ok(new ApiResponse<>(
-                true,
-                "Product updated successfully",
-                HttpStatus.OK.value(),
-                updated
-        ));
+        return service.update(id, request);
     }
 
+    @Loggable
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Object>> delete(@PathVariable Long id) {
 
@@ -70,19 +58,13 @@ public class ProductController {
         ));
     }
 
+    @Loggable
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<Object>> getOne(@PathVariable Long id) {
-
-        ProductResponse found = service.getOne(id);
-
-        return ResponseEntity.ok(new ApiResponse<>(
-                true,
-                "Product fetched successfully",
-                HttpStatus.OK.value(),
-                found
-        ));
+        return service.getOne(id);
     }
 
+    @Loggable
     @GetMapping
     public ResponseEntity<ApiResponse<Object>> getAll() {
 
