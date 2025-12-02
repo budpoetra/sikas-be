@@ -10,16 +10,22 @@ Created on 11/23/2025 11:51
 Version 1.0
 */
 
+import com.juaracoding.sikas.dto.response.ApiResponse;
 import com.juaracoding.sikas.dto.validation.ProductCategoryDTO;
 import com.juaracoding.sikas.dto.response.ProductCategoryResponse;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
+/**
+ * Platform Code: PDC
+ * Module Code: 005
+ */
 public interface ProductCategoryService {
-    ProductCategoryResponse create(ProductCategoryDTO request);
-    ProductCategoryResponse update(Long id, ProductCategoryDTO request);
+    ResponseEntity<ApiResponse<Object>> create(ProductCategoryDTO request);
+    ResponseEntity<ApiResponse<Object>> update(Long id, ProductCategoryDTO request);
     void delete(Long id);
-    ProductCategoryResponse getOne(Long id);
+    ResponseEntity<ApiResponse<Object>> getOne(Long id);
     List<ProductCategoryResponse> getAll();
 }
 

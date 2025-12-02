@@ -10,7 +10,8 @@ Created on 12/1/2025 21:44
 Version 1.0
 */
 
-import com.juaracoding.sikas.dto.response.DashboardSummaryResponse;
+import com.juaracoding.sikas.annotation.Loggable;
+import com.juaracoding.sikas.dto.response.ApiResponse;
 import com.juaracoding.sikas.service.DashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -23,10 +24,10 @@ public class DashboardController {
 
     private final DashboardService dashboardService;
 
+    @Loggable
     @GetMapping("/summary")
-    public ResponseEntity<?> getDashboardSummary() {
-        DashboardSummaryResponse summary = dashboardService.getSummary();
-        return ResponseEntity.ok(summary);
+    public ResponseEntity<ApiResponse<Object>> getDashboardSummary() {
+        return dashboardService.getSummary();
     }
 }
 

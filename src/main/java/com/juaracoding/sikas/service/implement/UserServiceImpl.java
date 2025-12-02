@@ -22,17 +22,15 @@ import com.juaracoding.sikas.model.UserTypePermission;
 import com.juaracoding.sikas.repository.MasterUserTypeRepository;
 import com.juaracoding.sikas.repository.UserRepository;
 import com.juaracoding.sikas.service.UserService;
+import com.juaracoding.sikas.util.ResponseFactory;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -146,6 +144,7 @@ public class UserServiceImpl implements UserService {
      * Module Code: 003
      * Quota Code: 21 - 30
      */
+    @Override
     public  ResponseEntity<ApiResponse<Object>> changePassword(ChangePasswordDTO dto, String username,  HttpServletRequest request) {
         try {
             if(!dto.getNewPassword().equals(dto.getConfirmPassword())) {
@@ -210,111 +209,256 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    // ========================= CREATE =========================
+    /**
+     * Create new user
+     * Platform Code: UST
+     * Module Code: 003
+     * Quota Code: 31 - 40
+     */
     @Override
-    public ApiResponse<?> createUser(UserDTO request) {
+    public ResponseEntity<ApiResponse<Object>> createUser(UserDTO request) {
 
-        if (request.getPassword() == null || request.getPassword().isBlank()) {
-            return new ApiResponse<>(false, "Password is required", 400, null);
+        try {
+            if (request.getPassword() == null || request.getPassword().isBlank()) {
+                log.warn("USR003W31 - Password is empty");
+
+                return ResponseFactory.error(
+                        "USR003W31 - Password is empty",
+                        HttpStatus.BAD_REQUEST,
+                        null
+                );
+            }
+
+            if (userRepository.existsByUsername(request.getUsername())) {
+                log.warn("USR003W32 - Username already exists");
+
+                return ResponseFactory.error(
+                        "USR003W32 - Username already exists",
+                        HttpStatus.BAD_REQUEST,
+                        null
+                );
+            }
+
+            if (userRepository.existsByEmail(request.getEmail())) {
+                log.warn("USR003W33 - Email already exists");
+
+                return ResponseFactory.error(
+                        "USR003W33 - Email already exists",
+                        HttpStatus.BAD_REQUEST,
+                        null
+                );
+            }
+
+            if (userRepository.existsByPhone(request.getPhone())) {
+                log.warn("USR003W34 - Phone already exists");
+
+                return ResponseFactory.error(
+                        "USR003W34 - Phone already exists",
+                        HttpStatus.BAD_REQUEST,
+                        null
+                );
+            }
+
+            MasterUserType userType = masterUserTypeRepository
+                    .findById(request.getTypeId()).orElseThrow(() -> {
+                        log.warn("USR003W35 - User Type not found");
+
+                        return new RuntimeException("USR003W35 - User Type not found");
+                    });
+
+            User user = new User();
+            user.setTypeId(request.getTypeId());
+            user.setFullName(request.getFullName());
+            user.setUsername(request.getUsername());
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+            user.setPhone(request.getPhone());
+            user.setEmail(request.getEmail());
+            user.setStatus(request.getStatus() != null ? request.getStatus() : 1);
+
+            userRepository.save(user);
+
+            return ResponseFactory.success(
+                    "User created successfully",
+                    HttpStatus.CREATED,
+                    mapToResponse(user, userType)
+            );
+        } catch (Exception e) {
+            log.error("USR003E40 - Error creating user: {}", e.getMessage());
+
+            return ResponseFactory.error(
+                    "USR003E40 - Failed to create user",
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    null
+            );
         }
-
-        if (userRepository.existsByUsername(request.getUsername())) {
-            return new ApiResponse<>(false, "Username already exists", 400, null);
-        }
-
-        if (userRepository.existsByEmail(request.getEmail())) {
-            return new ApiResponse<>(false, "Email already exists", 400, null);
-        }
-
-        if (userRepository.existsByPhone(request.getPhone())) {
-            return new ApiResponse<>(false, "Phone already exists", 400, null);
-        }
-
-        MasterUserType userType =
-                masterUserTypeRepository.findById(request.getTypeId()).orElse(null);
-
-        User user = new User();
-        user.setTypeId(request.getTypeId());
-        user.setFullName(request.getFullName());
-        user.setUsername(request.getUsername());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setPhone(request.getPhone());
-        user.setEmail(request.getEmail());
-        user.setStatus(request.getStatus() != null ? request.getStatus() : 1);
-
-        userRepository.save(user);
-
-        return new ApiResponse<>(true, "User created successfully", 201,
-                mapToResponse(user, userType));
     }
 
-    // ========================= GET =========================
+    /**
+     * Get user by ID
+     * Platform Code: UST
+     * Module Code: 003
+     * Quota Code: 41 - 50
+     */
     @Override
-    public ApiResponse<?> getUser(Integer id) {
-        return userRepository.findById(id)
-                .map(user -> {
-                    MasterUserType userType = masterUserTypeRepository
-                            .findById(user.getTypeId()).orElse(null);
-                    return new ApiResponse<>(true, "Success", 200,
-                            mapToResponse(user, userType));
-                })
-                .orElseGet(() -> new ApiResponse<>(false, "User not found", 404, null));
+    public ResponseEntity<ApiResponse<Object>> getUser(Integer id) {
+
+        try {
+            return userRepository.findById(id)
+                    .map(user -> {
+                        MasterUserType userType = masterUserTypeRepository
+                                .findById(user.getTypeId())
+                                .orElse(null);
+
+                        ApiResponse<Object> response = new ApiResponse<>(
+                                true,
+                                "Success",
+                                200,
+                                mapToResponse(user, userType)
+                        );
+
+                        return ResponseEntity.ok(response);
+                    })
+                    .orElseGet(() -> {
+                        log.warn("USR003E41 - User not found for id: {}", id);
+
+                        ApiResponse<Object> response = new ApiResponse<>(
+                                false,
+                                "User not found",
+                                404,
+                                null
+                        );
+
+                        return ResponseEntity.status(404).body(response);
+                    });
+        } catch (NumberFormatException e) {
+            log.error("USR003E50 - Error retrieving user: {}", e.getMessage());
+
+            ApiResponse<Object> response = new ApiResponse<>(
+                    false,
+                    "Invalid user ID format",
+                    400,
+                    null
+            );
+            return ResponseEntity.status(400).body(response);
+        }
     }
 
-    // ========================= UPDATE =========================
+    /**
+     * Update user by ID
+     * Platform Code: UST
+     * Module Code: 003
+     * Quota Code: 51 - 60
+     */
     @Override
-    public ApiResponse<?> updateUser(Integer id, UserDTO req) {
-        User user = userRepository.findById(id).orElse(null);
+    public ResponseEntity<ApiResponse<Object>> updateUser(Integer id, UserDTO req) {
 
-        if (user == null) {
-            return new ApiResponse<>(false, "User not found", 404, null);
+        try {
+            User user = userRepository.findById(id).orElse(null);
+
+            if (user == null) {
+                log.warn("USR003W51 - User not found for id: {}", id);
+
+                return ResponseFactory.error(
+                        "USR003W41 - User not found",
+                        HttpStatus.NOT_FOUND,
+                        null
+                );
+            }
+
+            // Cek email unique
+            if (!user.getEmail().equals(req.getEmail()) &&
+                    userRepository.existsByEmail(req.getEmail())) {
+                log.warn("USR003W52 - Email already exists");
+
+                return ResponseFactory.error(
+                        "Email already exists",
+                        HttpStatus.BAD_REQUEST,
+                        null
+                );
+            }
+
+            // Cek phone unique
+            if (!user.getPhone().equals(req.getPhone()) &&
+                    userRepository.existsByPhone(req.getPhone())) {
+                log.warn("USR003W53 - Phone already exists");
+
+                return ResponseFactory.error(
+                        "Phone already exists",
+                        HttpStatus.BAD_REQUEST,
+                        null
+                );
+            }
+
+            // Username sebaiknya tidak diubah
+            req.setUsername(user.getUsername());
+
+            user.setTypeId(req.getTypeId());
+            user.setFullName(req.getFullName());
+            user.setPhone(req.getPhone());
+            user.setEmail(req.getEmail());
+            user.setStatus(req.getStatus());
+
+            if (req.getPassword() != null && !req.getPassword().isBlank()) {
+                user.setPassword(passwordEncoder.encode(req.getPassword()));
+            }
+
+            userRepository.save(user);
+
+            MasterUserType userType = masterUserTypeRepository
+                    .findById(req.getTypeId()).orElse(null);
+
+            return ResponseFactory.success(
+                    "User updated successfully",
+                    HttpStatus.OK,
+                    mapToResponse(user, userType)
+            );
+        } catch (Exception e) {
+            log.error("USR003E60 - Error updating user: {}", e.getMessage());
+
+            return ResponseFactory.error(
+                    "Internal server error",
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    null
+            );
         }
-
-        // Cek email unique
-        if (!user.getEmail().equals(req.getEmail()) &&
-                userRepository.existsByEmail(req.getEmail())) {
-            return new ApiResponse<>(false, "Email already exists", 400, null);
-        }
-
-        // Cek phone unique
-        if (!user.getPhone().equals(req.getPhone()) &&
-                userRepository.existsByPhone(req.getPhone())) {
-            return new ApiResponse<>(false, "Phone already exists", 400, null);
-        }
-
-        // Username sebaiknya tidak diubah
-        req.setUsername(user.getUsername());
-
-        user.setTypeId(req.getTypeId());
-        user.setFullName(req.getFullName());
-        user.setPhone(req.getPhone());
-        user.setEmail(req.getEmail());
-        user.setStatus(req.getStatus());
-
-        if (req.getPassword() != null && !req.getPassword().isBlank()) {
-            user.setPassword(passwordEncoder.encode(req.getPassword()));
-        }
-
-        userRepository.save(user);
-
-        MasterUserType userType = masterUserTypeRepository
-                .findById(req.getTypeId()).orElse(null);
-
-        return new ApiResponse<>(true, "User updated successfully", 200,
-                mapToResponse(user, userType));
     }
 
-    // ========================= DELETE =========================
+    /**
+     * Delete user by ID
+     * Platform Code: UST
+     * Module Code: 003
+     * Quota Code: 61 - 70
+     */
     @Override
-    public ApiResponse<?> deleteUser(Integer id) {
+    public ResponseEntity<ApiResponse<Object>> deleteUser(Integer id) {
 
-        if (!userRepository.existsById(id)) {
-            return new ApiResponse<>(false, "User not found", 404, null);
+        try {
+            if (!userRepository.existsById(id)) {
+                log.warn("USR003W61 - User not found for id: {}", id);
+
+                return ResponseFactory.error(
+                        "USR003W61 - User not found",
+                        HttpStatus.NOT_FOUND,
+                        null
+                );
+            }
+
+            userRepository.deleteById(id);
+
+            return ResponseFactory.success(
+                    "User deleted successfully",
+                    HttpStatus.OK,
+                    null
+            );
+        } catch (NumberFormatException e) {
+            log.error("USR003W70 - Invalid user ID format: {}", e.getMessage());
+
+            return ResponseFactory.error(
+                    "USR003W70 - Invalid user ID format",
+                    HttpStatus.BAD_REQUEST,
+                    null
+            );
         }
-
-        userRepository.deleteById(id);
-
-        return new ApiResponse<>(true, "User deleted successfully", 200, null);
     }
 
     // ========================= MAPPER =========================

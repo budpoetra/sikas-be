@@ -10,47 +10,74 @@ Created on 12/1/2025 21:44
 Version 1.0
 */
 
+import com.juaracoding.sikas.dto.response.ApiResponse;
 import com.juaracoding.sikas.dto.response.DashboardSummaryResponse;
 import com.juaracoding.sikas.dto.response.LowStockItemResponse;
-import com.juaracoding.sikas.model.Product;
 import com.juaracoding.sikas.repository.ProductRepository;
 import com.juaracoding.sikas.service.DashboardService;
+import com.juaracoding.sikas.util.ResponseFactory;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DashboardServiceImpl implements DashboardService {
 
     private final ProductRepository productRepository;
 
+    /**
+     * Get dashboard summary including total products, total stock,
+     * Platform Code: DSB
+     * Module Code: 006
+     * Quota Code: 01 - 10
+     */
     @Override
-    public DashboardSummaryResponse getSummary() {
+    public ResponseEntity<ApiResponse<Object>> getSummary() {
 
-        Long totalProducts = productRepository.count();
-        Long totalStock = productRepository.getTotalStock();
-        if (totalStock == null) totalStock = 0L;
+        try {
+            Long totalProducts = productRepository.count();
+            Long totalStock = productRepository.getTotalStock();
+            if (totalStock == null) totalStock = 0L;
 
-        var lowStock = productRepository.findLowStock(10);
+            var lowStock = productRepository.findLowStock(10);
 
-        return DashboardSummaryResponse.builder()
-                .totalProducts(totalProducts)
-                .totalStock(totalStock)
-                .todayTransactions(0L) // BELUM ADA TRANSAKSI
-                .lowStockItems(
-                        lowStock.stream()
-                                .map(p -> LowStockItemResponse.builder()
-                                        .id(p.getId())
-                                        .productName(p.getProductName())
-                                        .stock(p.getStock())
-                                        .status(p.getStock() <= 5 ? "Low Stock" : "Warning")
-                                        .build()
-                                )
-                                .collect(Collectors.toList())
-                )
-                .build();
+            DashboardSummaryResponse response = DashboardSummaryResponse.builder()
+                    .totalProducts(totalProducts)
+                    .totalStock(totalStock)
+                    .todayTransactions(0L) // BELUM ADA TRANSAKSI
+                    .lowStockItems(
+                            lowStock.stream()
+                                    .map(p -> LowStockItemResponse.builder()
+                                            .id(p.getId())
+                                            .productName(p.getProductName())
+                                            .stock(p.getStock())
+                                            .status(p.getStock() <= 5 ? "Low Stock" : "Warning")
+                                            .build()
+                                    )
+                                    .collect(Collectors.toList())
+                    )
+                    .build();
+
+            return ResponseFactory.success(
+                    "Dashboard summary retrieved successfully",
+                    HttpStatus.OK,
+                    response
+            );
+        } catch (Exception e) {
+            log.warn("DSB006E01 - Error retrieving dashboard summary: {}", e.getMessage());
+
+            return ResponseFactory.error(
+                    "DSB006E01 - Failed to retrieve dashboard summary",
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    null
+            );
+        }
 
     }
 }

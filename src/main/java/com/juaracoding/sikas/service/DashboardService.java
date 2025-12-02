@@ -10,8 +10,13 @@ Created on 12/1/2025 21:43
 Version 1.0
 */
 
-import com.juaracoding.sikas.dto.response.DashboardSummaryResponse;
+import com.juaracoding.sikas.dto.response.ApiResponse;
+import org.springframework.http.ResponseEntity;
 
+/**
+ * Platform Code: DSB
+ * Module Code: 006
+ */
 public interface DashboardService {
-    DashboardSummaryResponse getSummary();
+    ResponseEntity<ApiResponse<Object>> getSummary();
 }

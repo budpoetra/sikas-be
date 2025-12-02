@@ -31,11 +31,11 @@ public interface UserService {
 
     ResponseEntity<ApiResponse<Object>> changePassword(ChangePasswordDTO dto, String username, HttpServletRequest request);
 
-    ApiResponse<?> createUser(UserDTO request);
+    ResponseEntity<ApiResponse<Object>> createUser(UserDTO request);
 
-    ApiResponse<?> getUser(Integer id);
+    ResponseEntity<ApiResponse<Object>> getUser(Integer id);
 
-    ApiResponse<?> updateUser(Integer id, UserDTO request);
+    ResponseEntity<ApiResponse<Object>> updateUser(Integer id, UserDTO request);
 
-    ApiResponse<?> deleteUser(Integer id);
+    ResponseEntity<ApiResponse<Object>> deleteUser(Integer id);
 }
