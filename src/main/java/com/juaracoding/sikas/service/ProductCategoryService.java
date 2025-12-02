@@ -10,15 +10,14 @@ Created on 11/23/2025 11:51
 Version 1.0
 */
 
-import com.juaracoding.sikas.dto.request.ProductCategoryRequest;
+import com.juaracoding.sikas.dto.validation.ProductCategoryDTO;
 import com.juaracoding.sikas.dto.response.ProductCategoryResponse;
-import com.juaracoding.sikas.model.ProductCategory;
 
 import java.util.List;
 
 public interface ProductCategoryService {
-    ProductCategoryResponse create(ProductCategoryRequest request);
-    ProductCategoryResponse update(Long id, ProductCategoryRequest request);
+    ProductCategoryResponse create(ProductCategoryDTO request);
+    ProductCategoryResponse update(Long id, ProductCategoryDTO request);
     void delete(Long id);
     ProductCategoryResponse getOne(Long id);
     List<ProductCategoryResponse> getAll();

@@ -10,16 +10,16 @@ Created on 11/23/2025 19:10
 Version 1.0
 */
 
-import com.juaracoding.sikas.dto.request.ProductRequest;
+import com.juaracoding.sikas.dto.validation.ProductDTO;
 import com.juaracoding.sikas.dto.response.ProductResponse;
-import com.juaracoding.sikas.model.Product;
+
 import java.util.List;
 
 public interface ProductService {
 
-    ProductResponse create(ProductRequest request);
+    ProductResponse create(ProductDTO request);
 
-    ProductResponse update(Long id, ProductRequest request);
+    ProductResponse update(Long id, ProductDTO request);
 
     void delete(Long id);
 

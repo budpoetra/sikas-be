@@ -10,10 +10,9 @@ Created on 11/23/2025 11:52
 Version 1.0
 */
 
-import com.juaracoding.sikas.dto.request.ProductCategoryRequest;
+import com.juaracoding.sikas.dto.validation.ProductCategoryDTO;
 import com.juaracoding.sikas.dto.response.ApiResponse;
 import com.juaracoding.sikas.dto.response.ProductCategoryResponse;
-import com.juaracoding.sikas.model.ProductCategory;
 import com.juaracoding.sikas.service.ProductCategoryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +29,7 @@ public class ProductCategoryController {
 
         @PostMapping
         public ResponseEntity<ApiResponse<Object>> create(
-                @Valid @RequestBody ProductCategoryRequest request
+                @Valid @RequestBody ProductCategoryDTO request
         ) {
             ProductCategoryResponse saved = service.create(request);
 
@@ -42,7 +41,7 @@ public class ProductCategoryController {
         @PutMapping("/{id}")
         public ResponseEntity<ApiResponse<Object>> update(
                 @PathVariable Long id,
-                @Valid @RequestBody ProductCategoryRequest request
+                @Valid @RequestBody ProductCategoryDTO request
         ) {
             ProductCategoryResponse updated = service.update(id, request);
 

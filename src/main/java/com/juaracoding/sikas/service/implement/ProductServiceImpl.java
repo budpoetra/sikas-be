@@ -10,7 +10,7 @@ Created on 11/23/2025 19:11
 Version 1.0
 */
 
-import com.juaracoding.sikas.dto.request.ProductRequest;
+import com.juaracoding.sikas.dto.validation.ProductDTO;
 import com.juaracoding.sikas.dto.response.ProductCategoryResponse;
 import com.juaracoding.sikas.dto.response.ProductResponse;
 import com.juaracoding.sikas.model.Product;
@@ -31,7 +31,7 @@ public class ProductServiceImpl implements ProductService {
     private final ProductCategoryRepository categoryRepository;
 
     @Override
-    public ProductResponse create(ProductRequest request) {
+    public ProductResponse create(ProductDTO request) {
 
         ProductCategory category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new RuntimeException("Category not found"));
@@ -53,7 +53,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductResponse update(Long id, ProductRequest request) {
+    public ProductResponse update(Long id, ProductDTO request) {
 
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found"));

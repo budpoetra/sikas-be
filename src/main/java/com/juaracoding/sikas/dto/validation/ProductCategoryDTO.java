@@ -1,4 +1,4 @@
-package com.juaracoding.sikas.dto.request;
+package com.juaracoding.sikas.dto.validation;
 
 /*
 IntelliJ IDEA 2022.3.1 (Community Edition)
@@ -16,7 +16,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
-public class ProductCategoryRequest {
+public class ProductCategoryDTO {
 
     @NotBlank(message = "Category name is required")
     @Size(min = 3, max = 50, message = "Category must be between 3 and 50 characters")

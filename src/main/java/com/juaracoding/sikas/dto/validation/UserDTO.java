@@ -1,4 +1,4 @@
-package com.juaracoding.sikas.dto.request;
+package com.juaracoding.sikas.dto.validation;
 
 import lombok.Data;
 
@@ -13,10 +13,9 @@ Version 1.0
 */
 
 import jakarta.validation.constraints.*;
-import lombok.Data;
 
 @Data
-public class UserRequest {
+public class UserDTO {
 
     @NotNull(message = "TypeId is required")
     private Integer typeId;

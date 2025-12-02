@@ -10,18 +10,15 @@ Created on 11/23/2025 19:12
 Version 1.0
 */
 
-import com.juaracoding.sikas.dto.request.ProductRequest;
+import com.juaracoding.sikas.dto.validation.ProductDTO;
 import com.juaracoding.sikas.dto.response.ApiResponse;
 import com.juaracoding.sikas.dto.response.ProductResponse;
-import com.juaracoding.sikas.model.Product;
 import com.juaracoding.sikas.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -32,7 +29,7 @@ public class ProductController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<Object>> create(
-            @Valid @RequestBody ProductRequest request
+            @Valid @RequestBody ProductDTO request
     ) {
         ProductResponse saved = service.create(request);
 
@@ -48,7 +45,7 @@ public class ProductController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<Object>> update(
             @PathVariable Long id,
-            @Valid @RequestBody ProductRequest request
+            @Valid @RequestBody ProductDTO request
     ) {
         ProductResponse updated = service.update(id, request);
 

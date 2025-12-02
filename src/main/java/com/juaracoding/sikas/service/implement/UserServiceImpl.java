@@ -9,7 +9,7 @@ Created on 11/25/2025 19:53
 @Last Modified 11/25/2025 19:53
 Version 1.0
 */
-import com.juaracoding.sikas.dto.request.UserRequest;
+import com.juaracoding.sikas.dto.validation.UserDTO;
 import com.juaracoding.sikas.dto.response.ApiResponse;
 import com.juaracoding.sikas.dto.response.MasterUserTypeResponse;
 import com.juaracoding.sikas.dto.response.UserResponse;
@@ -33,7 +33,7 @@ public class UserServiceImpl implements UserService {
 
     // ========================= CREATE =========================
     @Override
-    public ApiResponse<?> createUser(UserRequest request) {
+    public ApiResponse<?> createUser(UserDTO request) {
 
         if (request.getPassword() == null || request.getPassword().isBlank()) {
             return new ApiResponse<>(false, "Password is required", 400, null);
@@ -84,7 +84,7 @@ public class UserServiceImpl implements UserService {
 
     // ========================= UPDATE =========================
     @Override
-    public ApiResponse<?> updateUser(Integer id, UserRequest req) {
+    public ApiResponse<?> updateUser(Integer id, UserDTO req) {
         User user = userRepository.findById(id).orElse(null);
 
         if (user == null) {

@@ -10,7 +10,7 @@ Created on 11/26/2025 20:37
 Version 1.0
 */
 
-import com.juaracoding.sikas.dto.request.UserRequest;
+import com.juaracoding.sikas.dto.validation.UserDTO;
 import com.juaracoding.sikas.dto.response.ApiResponse;
 import com.juaracoding.sikas.service.UserService;
 import jakarta.validation.Valid;
@@ -26,7 +26,7 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<?>> createUser(@Valid @RequestBody UserRequest req) {
+    public ResponseEntity<ApiResponse<?>> createUser(@Valid @RequestBody UserDTO req) {
         return ResponseEntity.ok(userService.createUser(req));
     }
 
@@ -38,7 +38,7 @@ public class UserController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<?>> updateUser(
             @PathVariable Integer id,
-            @Valid @RequestBody UserRequest req
+            @Valid @RequestBody UserDTO req
     ) {
         return ResponseEntity.ok(userService.updateUser(id, req));
     }

@@ -10,16 +10,16 @@ Created on 11/25/2025 19:53
 Version 1.0
 */
 
-import com.juaracoding.sikas.dto.request.UserRequest;
+import com.juaracoding.sikas.dto.validation.UserDTO;
 import com.juaracoding.sikas.dto.response.ApiResponse;
 
 public interface UserService {
 
-    ApiResponse<?> createUser(UserRequest request);
+    ApiResponse<?> createUser(UserDTO request);
 
     ApiResponse<?> getUser(Integer id);
 
-    ApiResponse<?> updateUser(Integer id, UserRequest request);
+    ApiResponse<?> updateUser(Integer id, UserDTO request);
 
     ApiResponse<?> deleteUser(Integer id);
 }

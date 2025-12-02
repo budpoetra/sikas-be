@@ -1,4 +1,4 @@
-package com.juaracoding.sikas.dto.request;
+package com.juaracoding.sikas.dto.validation;
 
 /*
 IntelliJ IDEA 2022.3.1 (Community Edition)
@@ -12,12 +12,11 @@ Version 1.0
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.Data;
 import java.math.BigDecimal;
 
 @Data
-public class ProductRequest {
+public class ProductDTO {
 
     @NotNull(message = "CategoryId is required")
     private Long categoryId;
