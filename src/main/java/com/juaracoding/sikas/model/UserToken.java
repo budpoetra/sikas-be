@@ -17,7 +17,8 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "UserToken")
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -37,7 +38,6 @@ public class UserToken {
             referencedColumnName = "Id",
             insertable = false,
             updatable = false,
-            nullable = false,
             foreignKey = @ForeignKey(name = "FK_UserToken_Users")
     )
     private User user;

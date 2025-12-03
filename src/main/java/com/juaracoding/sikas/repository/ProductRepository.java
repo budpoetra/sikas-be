@@ -14,7 +14,9 @@ Version 1.0
 import com.juaracoding.sikas.model.Product;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
@@ -26,6 +28,20 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query("SELECT p FROM Product p WHERE p.stock <= :threshold ORDER BY p.stock ASC")
     List<Product> findLowStock(Integer threshold);
+
+    @Query("""
+           SELECT p 
+           FROM Product p
+           JOIN p.transactionDetails td
+           JOIN td.transaction t
+           WHERE t.createdDate BETWEEN :startDate AND :endDate
+           GROUP BY p.id, p.productName, p.productCode, p.barcode, p.price, p.stock, p.status, p.categoryId, p.createdDate, p.updatedDate, p.createdBy, p.updatedBy
+           ORDER BY SUM(td.qtyTransaction) DESC
+           """)
+    List<Product> findTop5Products(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
 }
 
 

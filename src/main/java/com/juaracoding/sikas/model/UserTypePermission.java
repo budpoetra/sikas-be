@@ -17,7 +17,8 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "UserTypePermission")
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

@@ -16,7 +16,8 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "UserRelation")
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -34,7 +35,6 @@ public class UserRelation {
     @JoinColumn(
             name = "OwnerId",
             referencedColumnName = "Id",
-            nullable = false,
             insertable = false,
             updatable = false,
             foreignKey = @ForeignKey(name = "FK_UserRelation_Users_Owner")
