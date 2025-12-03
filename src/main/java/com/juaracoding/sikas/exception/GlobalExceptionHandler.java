@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.security.authentication.BadCredentialsException;
+
+import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -78,6 +80,24 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Object> handleRuntimeException(RuntimeException e) {
         return ResponseHandler.handleResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR,
+                e.getMessage(),
+                null
+        );
+    }
+
+    @ExceptionHandler(DateTimeParseException.class)
+    public ResponseEntity<Object> handleDateTimeParseException(DateTimeParseException e) {
+        return ResponseHandler.handleResponse(
+                HttpStatus.BAD_REQUEST,
+                "Invalid date format. Expected format: yyyy-MM-dd HH:mm:ss",
+                null
+        );
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Object> handleIllegalArgumentException(IllegalArgumentException e) {
+        return ResponseHandler.handleResponse(
+                HttpStatus.BAD_REQUEST,
                 e.getMessage(),
                 null
         );

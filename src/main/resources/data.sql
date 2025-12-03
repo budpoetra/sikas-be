@@ -74,16 +74,16 @@ VALUES
     (4, 6, 2, 1, GETDATE(), GETDATE()), -- cashier can read transaction
     (4, 6, 3, 1, GETDATE(), GETDATE()); -- cashier can update transaction
 
--- Default data for User
--- INSERT INTO Users (TypeId, FullName, UserName, Password, Phone, Email, Status, CreatedDate, UpdatedDate)
--- VALUES
---     (1, 'Super Admin', 'superadmin', 'supersecurepassword', '1234567890', 'superadmin@sikas.com', 1, GETDATE(), GETDATE()),
---     (2, 'Owner User', 'owneruser', 'ownersecurepassword', '0987654321', 'owneruser@sikas.com', 1, GETDATE(), GETDATE()),
---     (3, 'Admin User', 'adminuser', 'adminsecurepassword', '1122334455', 'adminuser@sikas.com', 1, GETDATE(), GETDATE()),
---     (4, 'Cashier User', 'cashieruser', 'cashiersecurepassword', '5566778899', 'cashieruser@sikas.com', 1, GETDATE(), GETDATE());
+-- Default data for ProductCategory
+INSERT INTO MasterProductCategories (Category, CreatedDate, UpdatedDate, CreatedBy, UpdatedBy)
+VALUES
+    ('Food', GETDATE(), GETDATE(), 3, 3),
+    ('Drink', GETDATE(), GETDATE(), 3, 3);
 
--- Default data for UserRelation
--- INSERT INTO UserRelation (OwnerId, UserId, CreatedBy, CreatedDate, UpdatedDate)
--- VALUES
---     (2, 3, 2, GETDATE(), GETDATE()), -- Owner User owns Admin User
---     (2, 4, 2, GETDATE(), GETDATE()); -- Owner User owns Cashier User
+-- Default data for Product
+INSERT INTO MasterProducts (CategoryId, ProductName, ProductCode, Barcode, Price, Stock, Status, CreatedDate, UpdatedDate, CreatedBy, UpdatedBy)
+VALUES
+    (1, 'Indomie Rebus', 'INDR', '1234567890123', 8000, 150, 1, GETDATE(), GETDATE(), 3, 3),
+    (1, 'Indomie Goreng', 'INDG', '1234567890124', 9000, 100, 1, GETDATE(), GETDATE(), 3, 3),
+    (2, 'Teh Botol', 'TEHB', '1234567890125', 5000, 200, 1, GETDATE(), GETDATE(), 3, 3),
+    (2, 'Aqua 600ml', 'AQ6M', '1234567890126', 3000, 250, 1, GETDATE(), GETDATE(), 3, 3);

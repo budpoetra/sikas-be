@@ -10,23 +10,28 @@ Created on 11/11/2025 1:31 PM
 Version 1.0
 */
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(
         name = "Users",
         uniqueConstraints = {
-                @UniqueConstraint(name = "UQ_UserName", columnNames = "UserName"),
+                @UniqueConstraint(name = "UQ_Username", columnNames = "Username"),
                 @UniqueConstraint(name = "UQ_Email", columnNames = "Email"),
                 @UniqueConstraint(name = "UQ_Phone", columnNames = "Phone")
         }
 )
-@Data
-@Builder
+
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class User {
 
     @Id
@@ -74,6 +79,14 @@ public class User {
         };
     }
 
+    @OneToMany(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY,
+            orphanRemoval = true
+    )
+    @JsonManagedReference
+    private List<Transaction> transactions;
 
     @Column(name = "CreatedDate", nullable = false, updatable = false)
     private LocalDateTime createdDate;

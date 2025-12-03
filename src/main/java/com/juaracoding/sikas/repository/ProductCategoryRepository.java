@@ -12,8 +12,28 @@ Version 1.0
 
 import com.juaracoding.sikas.model.ProductCategory;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 public interface ProductCategoryRepository extends JpaRepository<ProductCategory, Long> {
     boolean existsByCategory(String category);
+
+    @Query(value = """
+       SELECT TOP 5 pc.*
+       FROM MasterProductCategories pc
+       JOIN MasterProducts p ON pc.Id = p.CategoryId
+       JOIN TransactionDetails td ON p.Id = td.ProductId
+       JOIN Transactions t ON t.Id = td.TransactionId
+       WHERE t.CreatedDate BETWEEN :startDate AND :endDate
+       GROUP BY pc.Id, pc.Category, pc.CreatedDate, pc.UpdatedDate, pc.CreatedBy, pc.UpdatedBy
+       ORDER BY SUM(td.QtyTransaction) DESC
+       """, nativeQuery = true)
+    List<ProductCategory> findTop5Categories(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
 }
 

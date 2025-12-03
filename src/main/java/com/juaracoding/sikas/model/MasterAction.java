@@ -21,7 +21,8 @@ import java.time.LocalDateTime;
                 @UniqueConstraint(name = "UQ_ActionName", columnNames = "Name")
         }
 )
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

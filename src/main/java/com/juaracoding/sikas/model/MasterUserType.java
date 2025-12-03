@@ -23,7 +23,8 @@ import java.util.List;
                 @UniqueConstraint(name = "UQ_UserType", columnNames = "UserType")
         }
 )
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
