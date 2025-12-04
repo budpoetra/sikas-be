@@ -27,8 +27,8 @@ public class ProductCategoryResponse {
     private String category;
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
-    private Long createdBy;
-    private Long updatedBy;
+    private Integer createdBy;
+    private Integer updatedBy;
 }
 
 

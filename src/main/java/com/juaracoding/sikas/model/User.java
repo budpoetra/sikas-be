@@ -52,6 +52,15 @@ public class User {
     )
     private MasterUserType masterUserType;
 
+    @OneToMany(
+            mappedBy = "owner",
+            cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY,
+            orphanRemoval = true
+    )
+    @JsonManagedReference
+    private List<UserRelation> userRelations;
+
     @Column(name = "FullName", nullable = false, length = 100)
     private String fullName;
 

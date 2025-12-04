@@ -12,6 +12,8 @@ Version 1.0
 
 
 import com.juaracoding.sikas.model.Product;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -42,6 +44,16 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate
     );
+
+    @Query("""
+        SELECT p FROM Product p 
+        WHERE (:search IS NULL 
+                  OR LOWER(p.productName) LIKE LOWER(CONCAT('%', :search, '%'))
+                  OR LOWER(p.productCode) LIKE LOWER(CONCAT('%', :search, '%'))
+                  OR LOWER(p.barcode) LIKE LOWER(CONCAT('%', :search, '%'))
+            )
+    """)
+    Page<Product> searchListProduct(@Param("search") String search, Pageable pageable);
 }
 
 

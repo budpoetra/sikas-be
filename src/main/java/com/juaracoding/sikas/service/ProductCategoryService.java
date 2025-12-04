@@ -13,6 +13,7 @@ Version 1.0
 import com.juaracoding.sikas.dto.response.ApiResponse;
 import com.juaracoding.sikas.dto.validation.ProductCategoryDTO;
 import com.juaracoding.sikas.dto.response.ProductCategoryResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
@@ -26,7 +27,14 @@ public interface ProductCategoryService {
     ResponseEntity<ApiResponse<Object>> update(Long id, ProductCategoryDTO request);
     void delete(Long id);
     ResponseEntity<ApiResponse<Object>> getOne(Long id);
-    List<ProductCategoryResponse> getAll();
+    ResponseEntity<ApiResponse<Object>> getListProductCategory(
+            String search,
+            int page,
+            int size,
+            String sort,
+            String direction,
+            HttpServletRequest request
+    );
 }
 
 

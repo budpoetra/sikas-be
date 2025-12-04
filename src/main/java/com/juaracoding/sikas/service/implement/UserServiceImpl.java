@@ -10,30 +10,35 @@ Created on 11/27/2025 3:38 PM
 Version 1.0
 */
 
-import com.juaracoding.sikas.dto.response.ApiResponse;
-import com.juaracoding.sikas.dto.response.MasterUserTypeResponse;
-import com.juaracoding.sikas.dto.response.ProfileResponse;
-import com.juaracoding.sikas.dto.response.UserResponse;
+import com.juaracoding.sikas.dto.LinksDTO;
+import com.juaracoding.sikas.dto.response.*;
 import com.juaracoding.sikas.dto.validation.ChangePasswordDTO;
+import com.juaracoding.sikas.dto.MetaDTO;
 import com.juaracoding.sikas.dto.validation.UserDTO;
 import com.juaracoding.sikas.model.MasterUserType;
 import com.juaracoding.sikas.model.User;
+import com.juaracoding.sikas.model.UserRelation;
 import com.juaracoding.sikas.model.UserTypePermission;
 import com.juaracoding.sikas.repository.MasterUserTypeRepository;
+import com.juaracoding.sikas.repository.UserRelationRepository;
 import com.juaracoding.sikas.repository.UserRepository;
+import com.juaracoding.sikas.security.UserDetailsImpl;
 import com.juaracoding.sikas.service.UserService;
+import com.juaracoding.sikas.util.PaginationUrlBuilderUtil;
 import com.juaracoding.sikas.util.ResponseFactory;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -43,6 +48,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final MasterUserTypeRepository masterUserTypeRepository;
+    private final UserRelationRepository userRelationRepository;
     private final PasswordEncoder passwordEncoder;
 
     /**
@@ -216,6 +222,7 @@ public class UserServiceImpl implements UserService {
      * Quota Code: 31 - 40
      */
     @Override
+    @Transactional
     public ResponseEntity<ApiResponse<Object>> createUser(UserDTO request) {
 
         try {
@@ -259,9 +266,19 @@ public class UserServiceImpl implements UserService {
                 );
             }
 
+            if (!Objects.equals(request.getPassword(), request.getConfirmPassword())) {
+                log.warn("USR003W35 - Password and Confirm Password do not match");
+
+                return ResponseFactory.error(
+                        "USR003W35 - Password and Confirm Password do not match",
+                        HttpStatus.BAD_REQUEST,
+                        null
+                );
+            }
+
             MasterUserType userType = masterUserTypeRepository
                     .findById(request.getTypeId()).orElseThrow(() -> {
-                        log.warn("USR003W35 - User Type not found");
+                        log.warn("USR003W36 - User Type not found");
 
                         return new RuntimeException("USR003W35 - User Type not found");
                     });
@@ -276,6 +293,17 @@ public class UserServiceImpl implements UserService {
             user.setStatus(request.getStatus() != null ? request.getStatus() : 1);
 
             userRepository.save(user);
+
+            Authentication auth = SecurityContextHolder
+                    .getContext()
+                    .getAuthentication();
+
+            UserDetailsImpl authUser = (UserDetailsImpl) auth.getPrincipal();
+
+            UserRelation userRelation = new UserRelation();
+            userRelation.setOwnerId(authUser.getUser().getId());
+            userRelation.setUserId(user.getId());
+            userRelationRepository.save(userRelation);
 
             return ResponseFactory.success(
                     "User created successfully",
@@ -350,11 +378,14 @@ public class UserServiceImpl implements UserService {
      * Quota Code: 51 - 60
      */
     @Override
-    public ResponseEntity<ApiResponse<Object>> updateUser(Integer id, UserDTO req) {
-
+    @Transactional
+    public ResponseEntity<ApiResponse<Object>> updateUser(
+            Integer id,
+            UserDTO req
+    ) {
         try {
-            User user = userRepository.findById(id).orElse(null);
 
+            User user = userRepository.findById(id).orElse(null);
             if (user == null) {
                 log.warn("USR003W51 - User not found for id: {}", id);
 
@@ -365,10 +396,9 @@ public class UserServiceImpl implements UserService {
                 );
             }
 
-            // Cek email unique
-            if (!user.getEmail().equals(req.getEmail()) &&
-                    userRepository.existsByEmail(req.getEmail())) {
-                log.warn("USR003W52 - Email already exists");
+            boolean emailExists = userRepository.existsByEmailAndIdNot(req.getEmail(), id);
+            if (emailExists) {
+                log.warn("USR003W52 - Email already exists: {}", req.getEmail());
 
                 return ResponseFactory.error(
                         "Email already exists",
@@ -377,10 +407,9 @@ public class UserServiceImpl implements UserService {
                 );
             }
 
-            // Cek phone unique
-            if (!user.getPhone().equals(req.getPhone()) &&
-                    userRepository.existsByPhone(req.getPhone())) {
-                log.warn("USR003W53 - Phone already exists");
+            boolean phoneExists = userRepository.existsByPhoneAndIdNot(req.getPhone(), id);
+            if (phoneExists) {
+                log.warn("USR003W53 - Phone already exists: {}", req.getPhone());
 
                 return ResponseFactory.error(
                         "Phone already exists",
@@ -389,31 +418,24 @@ public class UserServiceImpl implements UserService {
                 );
             }
 
-            // Username sebaiknya tidak diubah
-            req.setUsername(user.getUsername());
-
-            user.setTypeId(req.getTypeId());
             user.setFullName(req.getFullName());
             user.setPhone(req.getPhone());
             user.setEmail(req.getEmail());
-            user.setStatus(req.getStatus());
-
-            if (req.getPassword() != null && !req.getPassword().isBlank()) {
-                user.setPassword(passwordEncoder.encode(req.getPassword()));
-            }
 
             userRepository.save(user);
 
             MasterUserType userType = masterUserTypeRepository
-                    .findById(req.getTypeId()).orElse(null);
+                    .findById(user.getTypeId())
+                    .orElse(null);
 
             return ResponseFactory.success(
                     "User updated successfully",
                     HttpStatus.OK,
                     mapToResponse(user, userType)
             );
+
         } catch (Exception e) {
-            log.error("USR003E60 - Error updating user: {}", e.getMessage());
+            log.error("USR003E60 - Error updating user: {}", e.getMessage(), e);
 
             return ResponseFactory.error(
                     "Internal server error",
@@ -433,7 +455,9 @@ public class UserServiceImpl implements UserService {
     public ResponseEntity<ApiResponse<Object>> deleteUser(Integer id) {
 
         try {
-            if (!userRepository.existsById(id)) {
+            Optional<User> userOpt = userRepository.findById(id);
+
+            if (userOpt.isEmpty()) {
                 log.warn("USR003W61 - User not found for id: {}", id);
 
                 return ResponseFactory.error(
@@ -443,7 +467,10 @@ public class UserServiceImpl implements UserService {
                 );
             }
 
-            userRepository.deleteById(id);
+            User user = userOpt.get();
+
+            user.setStatus((byte) 0);
+            userRepository.save(user);
 
             return ResponseFactory.success(
                     "User deleted successfully",
@@ -459,6 +486,86 @@ public class UserServiceImpl implements UserService {
                     null
             );
         }
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<Object>> getListUser(
+            String search,
+            int page,
+            int size,
+            String sort,
+            String direction,
+            HttpServletRequest request
+    ) {
+        try {
+            Authentication auth = SecurityContextHolder
+                    .getContext()
+                    .getAuthentication();
+
+            UserDetailsImpl authUser = (UserDetailsImpl) auth.getPrincipal();
+
+            Pageable pageable = PageRequest.of(
+                    page,
+                    size,
+                    direction.equalsIgnoreCase("desc")
+                            ? Sort.by(sort).descending()
+                            : Sort.by(sort).ascending()
+            );
+
+            Page<User> userPage = userRepository.searchListUsers(authUser.getUser().getId(), search, pageable);
+
+            List<UserListResponse> content = userPage.getContent()
+                    .stream()
+                    .map(u -> new UserListResponse(
+                            u.getId(),
+                            u.getFullName(),
+                            u.getUsername(),
+                            u.getEmail(),
+                            u.getPhone(),
+                            u.getMasterUserType().getUserType()
+                    ))
+                    .toList();
+
+            int totalPages = userPage.getTotalPages();
+
+            String selfUrl = PaginationUrlBuilderUtil.build(request, page);
+            String nextUrl = PaginationUrlBuilderUtil.buildNullable(request, page + 1, totalPages);
+            String prevUrl = PaginationUrlBuilderUtil.buildNullable(request, page - 1, totalPages);
+
+            MetaDTO meta = new MetaDTO(
+                    userPage.getNumber() + 1,
+                    userPage.getSize(),
+                    userPage.getTotalElements(),
+                    userPage.getTotalPages()
+            );
+
+            LinksDTO links = new LinksDTO(
+                    selfUrl,
+                    nextUrl,
+                    prevUrl
+            );
+
+            PageResponse<Object> response = new PageResponse<>(
+                    content,
+                    meta,
+                    links
+            );
+
+            return ResponseFactory.success(
+                    "User list retrieved successfully",
+                    HttpStatus.OK,
+                    response
+            );
+        } catch (Exception e) {
+            log.error("USR003E80 - Error retrieving user list: {}", e.getMessage());
+
+            return ResponseFactory.error(
+                    "USR003E80 - Internal server error",
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    null
+            );
+        }
+
     }
 
     // ========================= MAPPER =========================

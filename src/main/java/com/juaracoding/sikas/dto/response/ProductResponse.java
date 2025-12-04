@@ -25,17 +25,15 @@ public class ProductResponse {
     private Long id;
     private String productName;
     private String productCode;
+    private Long categoryId;
     private BigDecimal price;
     private String barcode;
     private Integer stock;
     private Integer status;
-
-    private ProductCategoryResponse category; // ← NESTED OBJECT DI SINI
-
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
-    private Long createdBy;
-    private Long updatedBy;
+    private Integer createdBy;
+    private Integer updatedBy;
 
 }
 

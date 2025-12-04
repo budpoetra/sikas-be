@@ -14,6 +14,7 @@ import com.juaracoding.sikas.annotation.Loggable;
 import com.juaracoding.sikas.dto.validation.ProductCategoryDTO;
 import com.juaracoding.sikas.dto.response.ApiResponse;
 import com.juaracoding.sikas.service.ProductCategoryService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -45,33 +46,21 @@ public class ProductCategoryController {
         }
 
         @Loggable
-        @DeleteMapping("/{id}")
-        public ResponseEntity<ApiResponse<Object>> delete(@PathVariable Long id) {
-
-            service.delete(id);
-
-            return ResponseEntity.ok(
-                    new ApiResponse<>(true, "Category deleted successfully",
-                            HttpStatus.OK.value(), null)
-            );
-        }
-
-        @Loggable
         @GetMapping("/{id}")
         public ResponseEntity<ApiResponse<Object>> getOne(@PathVariable Long id) {
             return service.getOne(id);
         }
 
-        @Loggable
-        @GetMapping
-        public ResponseEntity<ApiResponse<Object>> getAll() {
-            return ResponseEntity.ok(
-                    new ApiResponse<>(true,
-                            "List of all categories",
-                            HttpStatus.OK.value(),
-                            service.getAll())
-            );
-        }
+    @Loggable
+    @GetMapping("/list")
+    public ResponseEntity<ApiResponse<Object>> getListProductCategory(@RequestParam(value = "search", required = false) String search,
+                                                              @RequestParam(value = "page", defaultValue = "0") int page,
+                                                              @RequestParam(value = "size", defaultValue = "10") int size,
+                                                              @RequestParam(value = "sort", defaultValue = "id") String sort,
+                                                              @RequestParam(value = "direction", defaultValue = "desc") String direction,
+                                                              HttpServletRequest request) {
+        return service.getListProductCategory(search, page, size, sort, direction, request);
+    }
     }
 
 
