@@ -13,12 +13,16 @@ Version 1.0
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(
         name = "MasterProducts",
         uniqueConstraints = {
@@ -91,11 +95,13 @@ public class Product {
     @Column(name = "UpdatedDate")
     private LocalDateTime updatedDate;
 
+    @CreatedBy
     @Column(name = "CreatedBy")
-    private Long createdBy;
+    private Integer createdBy;
 
+    @LastModifiedBy
     @Column(name = "UpdatedBy")
-    private Long updatedBy;
+    private Integer updatedBy;
 
     @Transient
     public String getStatusName() {

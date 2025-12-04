@@ -11,6 +11,8 @@ Version 1.0
 */
 
 import com.juaracoding.sikas.model.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -34,4 +36,23 @@ public interface UserRepository extends JpaRepository<User, Integer> {
               AND u.username = :username
     """)
     Optional<User> fetchUserAndPermissionsByUsername(@Param("username") String username);
+
+    boolean existsByEmailAndIdNot(String email, Integer id);
+
+    boolean existsByPhoneAndIdNot(String phone, Integer id);
+
+    @Query("""
+        SELECT u FROM User u
+        JOIN UserRelation ur ON u.id = ur.userId
+        WHERE ur.ownerId = :id
+          AND (
+                :search IS NULL
+                OR LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%'))
+                OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%'))
+                OR LOWER(u.phone) LIKE LOWER(CONCAT('%', :search, '%'))
+          )
+    """)
+    Page<User> searchListUsers(@Param("id") Integer id,
+                               @Param("search") String search,
+                               Pageable pageable);
 }

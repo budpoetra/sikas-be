@@ -38,4 +38,13 @@ public interface UserService {
     ResponseEntity<ApiResponse<Object>> updateUser(Integer id, UserDTO request);
 
     ResponseEntity<ApiResponse<Object>> deleteUser(Integer id);
+
+    ResponseEntity<ApiResponse<Object>> getListUser(
+            String search,
+            int page,
+            int size,
+            String sort,
+            String direction,
+            HttpServletRequest request
+    );
 }

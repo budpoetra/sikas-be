@@ -10,33 +10,35 @@ Created on 11/23/2025 19:55
 Version 1.0
 */
 
+import com.juaracoding.sikas.dto.validation.group.*;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import java.math.BigDecimal;
 
 @Data
 public class ProductDTO {
 
-    @NotNull(message = "CategoryId is required")
+    @NotNull(message = "CategoryId is required", groups = {Create.class, Update.class})
     private Long categoryId;
 
-    @NotBlank(message = "Product name is required")
+    @NotBlank(message = "Product name is required", groups = {Create.class, Update.class})
     private String productName;
 
-    @NotBlank(message = "Product code is required")
+    @NotBlank(message = "Product code is required", groups = {Create.class})
+    @Size(max = 4, message = "Product code must not exceed 4 characters", groups = {Create.class})
     private String productCode;
 
-    @NotNull(message = "Price is required")
+    @NotNull(message = "Price is required", groups = {Create.class, Update.class})
+    @Digits(integer = 13, fraction = 0,
+            message = "Price must be a valid number with up to 13 digits and 0 decimals",
+            groups = {Create.class, Update.class})
     private BigDecimal price;
 
-    @NotBlank(message = "Barcode is required")
-    private String barcode;
+    private Integer status = 1;
 
-    @NotNull(message = " Stock is required")
-    private Integer stock;
-
-    private Integer status; // optional, default 1
 }
 
 

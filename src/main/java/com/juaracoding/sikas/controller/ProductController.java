@@ -13,11 +13,13 @@ Version 1.0
 import com.juaracoding.sikas.annotation.Loggable;
 import com.juaracoding.sikas.dto.validation.ProductDTO;
 import com.juaracoding.sikas.dto.response.ApiResponse;
+import com.juaracoding.sikas.dto.validation.group.*;
 import com.juaracoding.sikas.service.ProductService;
-import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -30,16 +32,16 @@ public class ProductController {
     @Loggable
     @PostMapping
     public ResponseEntity<ApiResponse<Object>> create(
-            @Valid @RequestBody ProductDTO request
+            @Validated(Create.class) @RequestBody ProductDTO request
     ) {
         return service.create(request);
     }
 
     @Loggable
-    @PutMapping("/{id}")
+    @PatchMapping("/{id}")
     public ResponseEntity<ApiResponse<Object>> update(
             @PathVariable Long id,
-            @Valid @RequestBody ProductDTO request
+            @Validated(Update.class) @RequestBody ProductDTO request
     ) {
         return service.update(id, request);
     }
@@ -65,17 +67,14 @@ public class ProductController {
     }
 
     @Loggable
-    @GetMapping
-    public ResponseEntity<ApiResponse<Object>> getAll() {
-
-        var list = service.getAll();
-
-        return ResponseEntity.ok(new ApiResponse<>(
-                true,
-                "All products fetched successfully",
-                HttpStatus.OK.value(),
-                list
-        ));
+    @GetMapping("/list")
+    public ResponseEntity<ApiResponse<Object>> getListProduct(@RequestParam(value = "search", required = false) String search,
+                                                           @RequestParam(value = "page", defaultValue = "0") int page,
+                                                           @RequestParam(value = "size", defaultValue = "10") int size,
+                                                           @RequestParam(value = "sort", defaultValue = "id") String sort,
+                                                           @RequestParam(value = "direction", defaultValue = "desc") String direction,
+                                                           HttpServletRequest request) {
+        return service.getListProduct(search, page, size, sort, direction, request);
     }
 }
 

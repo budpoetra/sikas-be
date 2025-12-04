@@ -10,11 +10,16 @@ Created on 11/13/2025 4:16 PM
 Version 1.0
 */
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 import java.time.LocalDateTime;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "UserRelation")
 @Getter
 @Setter
@@ -28,6 +33,7 @@ public class UserRelation {
     @Column(name = "Id")
     private Integer id;
 
+    @CreatedBy
     @Column(name = "OwnerId", nullable = false)
     private Integer ownerId;
 
@@ -39,6 +45,7 @@ public class UserRelation {
             updatable = false,
             foreignKey = @ForeignKey(name = "FK_UserRelation_Users_Owner")
     )
+    @JsonBackReference
     private User owner;
 
     @Column(name = "UserId", nullable = false)
@@ -55,6 +62,7 @@ public class UserRelation {
     )
     private User user;
 
+    @CreatedBy
     @Column(name = "CreatedBy", nullable = false)
     private Integer createdBy;
 

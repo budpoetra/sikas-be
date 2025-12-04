@@ -15,6 +15,11 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,6 +28,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "MasterProductCategories")
 public class ProductCategory {
 
@@ -34,32 +40,25 @@ public class ProductCategory {
     @Column(name = "Category", nullable = false, unique = true)
     private String category;
 
+    @CreatedDate
     @Column(name = "CreatedDate", updatable = false)
     private LocalDateTime createdDate;
 
+    @LastModifiedDate
     @Column(name = "UpdatedDate")
     private LocalDateTime updatedDate;
 
+    @CreatedBy
     @Column(name = "CreatedBy")
-    private Long createdBy;
+    private Integer createdBy;
 
+    @LastModifiedBy
     @Column(name = "UpdatedBy")
-    private Long updatedBy;
+    private Integer updatedBy;
 
     @OneToMany(mappedBy = "category", fetch = FetchType.LAZY)
     @JsonIgnore
     private List<Product> products;
-
-    @PrePersist
-    protected void onCreate() {
-        this.createdDate = LocalDateTime.now();
-        this.updatedDate = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedDate = LocalDateTime.now();
-    }
 }
 
 

@@ -10,15 +10,22 @@ Created on 11/23/2025 11:56
 Version 1.0
 */
 
+import com.juaracoding.sikas.dto.LinksDTO;
+import com.juaracoding.sikas.dto.MetaDTO;
 import com.juaracoding.sikas.dto.response.ApiResponse;
+import com.juaracoding.sikas.dto.response.PageResponse;
 import com.juaracoding.sikas.dto.validation.ProductCategoryDTO;
 import com.juaracoding.sikas.dto.response.ProductCategoryResponse;
 import com.juaracoding.sikas.model.ProductCategory;
 import com.juaracoding.sikas.repository.ProductCategoryRepository;
 import com.juaracoding.sikas.service.ProductCategoryService;
+import com.juaracoding.sikas.util.PaginationUrlBuilderUtil;
 import com.juaracoding.sikas.util.ResponseFactory;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -42,10 +49,18 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
     public ResponseEntity<ApiResponse<Object>> create(ProductCategoryDTO request) {
 
         try {
+            if (repository.existsByCategory(request.getCategory())) {
+                log.error("PDC005E01 - Category {} already exists", request.getCategory());
+
+                return ResponseFactory.error(
+                        "PDC005E01 - Category already exists",
+                        HttpStatus.CONFLICT,
+                        null
+                );
+            }
+
             ProductCategory entity = new ProductCategory();
             entity.setCategory(request.getCategory());
-            entity.setCreatedBy(1L);
-            entity.setUpdatedBy(1L);
 
             ProductCategory saved = repository.save(entity);
 
@@ -84,7 +99,6 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
                     });
 
             entity.setCategory(request.getCategory());
-            entity.setUpdatedBy(1L);
 
             ProductCategory updated = repository.save(entity);
 
@@ -168,16 +182,68 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
      * Quota Code: 41 - 50
      */
     @Override
-    public List<ProductCategoryResponse> getAll() {
-
+    public ResponseEntity<ApiResponse<Object>> getListProductCategory(
+            String search,
+            int page,
+            int size,
+            String sort,
+            String direction,
+            HttpServletRequest request
+    ) {
         try {
-            return repository.findAll().stream()
+            Pageable pageable = PageRequest.of(
+                    page,
+                    size,
+                    direction.equalsIgnoreCase("desc")
+                            ? org.springframework.data.domain.Sort.by(sort).descending()
+                            : org.springframework.data.domain.Sort.by(sort).ascending()
+            );
+
+            var categoryPage = repository.searchListProductCategory(search, pageable);
+
+            List<ProductCategoryResponse> content = categoryPage.stream()
                     .map(this::mapToResponse)
                     .toList();
+
+            int totalPages = categoryPage.getTotalPages();
+
+            String selfUrl = PaginationUrlBuilderUtil.build(request, page);
+            String nextUrl = PaginationUrlBuilderUtil.buildNullable(request, page + 1, totalPages);
+            String prevUrl = PaginationUrlBuilderUtil.buildNullable(request, page - 1, totalPages);
+
+            MetaDTO meta = new MetaDTO(
+                    categoryPage.getNumber() + 1,
+                    categoryPage.getSize(),
+                    categoryPage.getTotalElements(),
+                    categoryPage.getTotalPages()
+            );
+
+            LinksDTO links = new LinksDTO(
+                    selfUrl,
+                    nextUrl,
+                    prevUrl
+            );
+
+            PageResponse<Object> response = new PageResponse<>(
+                    content,
+                    meta,
+                    links
+            );
+
+            return ResponseFactory.success(
+                    "Categories fetched successfully",
+                    HttpStatus.OK,
+                    response
+            );
+
         } catch (Exception e) {
-            log.error("PDC005E50 - Error fetching all categories: {}", e.getMessage());
-            
-            throw new RuntimeException("PDC005E50 - Failed to fetch categories");
+            log.error("PDC005E50 - Error fetching categories: {}", e.getMessage());
+
+            return ResponseFactory.error(
+                    "PDC005E50 - Failed to fetch categories",
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    null
+            );
         }
     }
 

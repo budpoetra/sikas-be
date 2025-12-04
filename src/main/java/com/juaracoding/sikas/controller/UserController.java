@@ -13,10 +13,12 @@ Version 1.0
 import com.juaracoding.sikas.annotation.Loggable;
 import com.juaracoding.sikas.dto.validation.UserDTO;
 import com.juaracoding.sikas.dto.response.ApiResponse;
+import com.juaracoding.sikas.dto.validation.group.*;
 import com.juaracoding.sikas.service.UserService;
-import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -28,7 +30,7 @@ public class UserController {
 
     @Loggable
     @PostMapping
-    public ResponseEntity<ApiResponse<Object>> createUser(@Valid @RequestBody UserDTO req) {
+    public ResponseEntity<ApiResponse<Object>> createUser(@Validated(Create.class) @RequestBody UserDTO req) {
         return userService.createUser(req);
     }
 
@@ -39,10 +41,10 @@ public class UserController {
     }
 
     @Loggable
-    @PutMapping("/{id}")
+    @PatchMapping("/{id}")
     public ResponseEntity<ApiResponse<Object>> updateUser(
             @PathVariable Integer id,
-            @Valid @RequestBody UserDTO req
+            @Validated(Update.class) @RequestBody UserDTO req
     ) {
         return userService.updateUser(id, req);
     }
@@ -51,6 +53,17 @@ public class UserController {
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Object>> deleteUser(@PathVariable Integer id) {
         return userService.deleteUser(id);
+    }
+
+    @Loggable
+    @GetMapping("/list")
+    public ResponseEntity<ApiResponse<Object>> getListUser(@RequestParam(value = "search", required = false) String search,
+                                                           @RequestParam(value = "page", defaultValue = "0") int page,
+                                                           @RequestParam(value = "size", defaultValue = "10") int size,
+                                                           @RequestParam(value = "sort", defaultValue = "id") String sort,
+                                                           @RequestParam(value = "direction", defaultValue = "desc") String direction,
+                                                           HttpServletRequest request) {
+        return userService.getListUser(search, page, size, sort, direction, request);
     }
 }
 
