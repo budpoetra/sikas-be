@@ -19,7 +19,8 @@ import org.bouncycastle.util.encoders.Hex;
 
 public class Crypto {
 
-    private static final String defaultKey = "746e4ea14c68acf3763e0907541b4da1";
+//    private static final String defaultKey = "746e4ea14c68acf3763e0907541b4da1";
+      private static final String defaultKey = "c83d78de4c320e81a348604619225349";
 
     public static String performEncrypt(String keyText, String plainText) {
         try{
@@ -61,7 +62,7 @@ public class Crypto {
 
     public static void main(String[] args) {
         // Put text to encrypt in here
-        String strToEncrypt = "text to encrypt";
+        String strToEncrypt = "JuaraCoding45";
 
         System.out.println("Encryption Result : "+performEncrypt(strToEncrypt));
     }
