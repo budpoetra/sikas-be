@@ -10,6 +10,8 @@ Created on 11/16/2025 12:06 PM
 Version 1.0
 */
 
+import com.juaracoding.sikas.dto.response.ApiResponse;
+import com.juaracoding.sikas.util.ResponseFactory;
 import io.jsonwebtoken.JwtException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -54,6 +56,21 @@ public class GlobalExceptionHandler {
                 "Invalid username or password",
                 null
         );
+    }
+
+    @ExceptionHandler(TrxNotFoundException.class)
+    public ResponseEntity<ApiResponse<Object>> handleNotFound(TrxNotFoundException ex) {
+        return ResponseFactory.error("Resource not found", HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(TrxInsufficientStockException.class)
+    public ResponseEntity<ApiResponse<Object>> handleInsufficientStock(TrxInsufficientStockException ex) {
+        return ResponseFactory.error("Insufficient stock", HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(TrxValidationException.class)
+    public ResponseEntity<ApiResponse<Object>> handleValidation(TrxValidationException ex) {
+        return ResponseFactory.error("Validation error", HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
     @ExceptionHandler(JwtException.class)

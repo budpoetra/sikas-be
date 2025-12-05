@@ -5,6 +5,9 @@ import com.juaracoding.sikas.dto.response.TransactionDetailResponse;
 import com.juaracoding.sikas.dto.response.TransactionResponse;
 import com.juaracoding.sikas.dto.validation.TransactionDTO;
 import com.juaracoding.sikas.dto.validation.TransactionDetailDTO;
+import com.juaracoding.sikas.exception.TrxInsufficientStockException;
+import com.juaracoding.sikas.exception.TrxNotFoundException;
+import com.juaracoding.sikas.exception.TrxValidationException;
 import com.juaracoding.sikas.model.Product;
 import com.juaracoding.sikas.model.Transaction;
 import com.juaracoding.sikas.model.TransactionDetail;
@@ -14,17 +17,24 @@ import com.juaracoding.sikas.repository.TransactionDetailRepository;
 import com.juaracoding.sikas.security.UserDetailsImpl;
 import com.juaracoding.sikas.service.TransactionService;
 import com.juaracoding.sikas.util.ResponseFactory;
+import com.juaracoding.sikas.util.TransactionNumberGenerator;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+
 
 @Service
 @RequiredArgsConstructor
@@ -33,295 +43,267 @@ public class TransactionServiceImpl implements TransactionService {
 
     private final TransactionRepository transactionRepository;
     private final TransactionDetailRepository transactionDetailRepository;
+//    @Autowired
     private final ProductRepository productRepository;
+    private final TransactionNumberGenerator transactionNumberGenerator;
 
-    @Transactional
     @Override
-    public ResponseEntity<ApiResponse<Object>> createTransaction(TransactionDTO transaction, HttpServletRequest request, UserDetailsImpl userDetails) {
-        try {
+    @Transactional
+    public ResponseEntity<ApiResponse<Object>> createTransaction(TransactionDTO transactionDTO,
+                                                                 HttpServletRequest request,
+                                                                 UserDetailsImpl userDetails) {
 
-            // Check Produck ID exist in DB
-            // Optional<Product> product = productRepository.findById()
-            // produck isi data produck dari db
-            // Check QTY cukup atau gak dari produck optional
+        validateTransactionRequest(transactionDTO);
 
-            // Extract semua productId dari request
-            Set<Long> productIds = new HashSet<>();
-            Map<Long, TransactionDetailDTO> productDetailMap = new HashMap<>();
+        // Fetch products and validate
+        Map<Long, Product> productMap = fetchAndValidateProducts(transactionDTO.getTransactionDetails());
 
-            // List<TransactionDetail> transactionDetailList = new ArrayList<>();
+        // Check stock availability
+        validateStockAvailability(transactionDTO.getTransactionDetails(), productMap);
 
-            // String transactionNumber = generateTransactionNumber();
-            // Transaction trx = Transaction.builder()
-                    // .userId(1)
-                    // .transactionNumber()
+        // Create and save transaction
+        Transaction transaction = createTransactionEntity(transactionDTO, userDetails);
+        Transaction savedTransaction = transactionRepository.save(transaction);
 
-            for (TransactionDetailDTO detail : transaction.getTransactionDetails()) {
-                productIds.add(detail.getProductId());
-                // Simpan detail untuk referensi nanti
-                productDetailMap.put(detail.getProductId(), detail);
-            }
+        // Create transaction details and update stock
+        List<TransactionDetail> transactionDetails = createTransactionDetails(
+                transactionDTO.getTransactionDetails(),
+                savedTransaction.getId(),
+                userDetails.getUser().getId(),
+                productMap
+        );
 
-//            System.out.println("============= +++ ==============");
-//            System.out.println(productIds);
+        // Update product stock
+        updateProductStock(transactionDTO.getTransactionDetails(), productMap);
+        productRepository.saveAll(productMap.values());
 
-            // Ambil semua product dari database sekaligus
-            List<Product> products = productRepository.findAllById(productIds);
+        // Save transaction details
+        List<TransactionDetail> savedDetails = transactionDetailRepository.saveAll(transactionDetails);
 
-//            products.getFirst();
+        log.info("Transaction created successfully. Transaction ID: {}, User ID: {}",
+                savedTransaction.getId(), userDetails.getUser().getId());
 
-//            log.info("LIST PRODUCT : {} ",products);
-//            System.out.print("==================");
-//            System.out.print(products);
-
-
-            // Validasi: semua productId harus ada di database
-            if (products.size() != productIds.size()) {
-                // Cari productId yang tidak ada
-                Set<Long> foundProductIds = products.stream()
-                        .map(Product::getId)
-                        .collect(Collectors.toSet());
-
-                Set<Long> missingProductIds = productIds.stream()
-                        .filter(id -> !foundProductIds.contains(id))
-                        .collect(Collectors.toSet());
-
-                // throw new RuntimeException("Product tidak ditemukan dengan ID: " + missingProductIds);
-                // return ResponseFactory.success("Transaction Failed", HttpStatus.NOT_FOUND, "Product tidak ditemukan dengan ID: "+missingProductIds);
-                return ResponseFactory.error("Transaction failed", HttpStatus.NOT_FOUND, "Product not found with ID : "+missingProductIds);
-            }
-
-            // Validasi stok cukup untuk setiap produk
-            // Buat map product untuk akses cepat
-            Map<Long, Product> productMap = products.stream()
-                    .collect(Collectors.toMap(Product::getId, p -> p));
-
-            // Hitung total qty per product
-            Map<Long, Long> totalQtyPerProduct = new HashMap<>();
-            for (TransactionDetailDTO detail : transaction.getTransactionDetails()) {
-                long productId = detail.getProductId();
-                totalQtyPerProduct.put(productId,
-                        totalQtyPerProduct.getOrDefault(productId, 0L) + detail.getQtyTransaction());
-            }
-
-            // Cek stok untuk setiap product
-            List<String> insufficientStockMessages = new ArrayList<>();
-            for (Map.Entry<Long, Long> entry : totalQtyPerProduct.entrySet()) {
-                long productId = entry.getKey();
-                long requiredQty = entry.getValue();
-                Product product = productMap.get(productId);
-
-                if (product.getStock() < requiredQty) {
-                    insufficientStockMessages.add(
-                            String.format("Product ID %d: Stok available %d, stock transaction %d",
-                                    productId, product.getStock(), requiredQty)
-                    );
-                }
-            }
-
-            if (!insufficientStockMessages.isEmpty()) {
-//                 throw new RuntimeException("Stok tidak cukup: " + String.join("; ", insufficientStockMessages));
-//                return ResponseFactory.success("Transaction Failed", HttpStatus.CONFLICT, "Stock tidak cukup : " + String.join("; ", insufficientStockMessages));
-                return ResponseFactory.error("Transaction failed", HttpStatus.CONFLICT, "Insufficient stock : "+String.join("; ", insufficientStockMessages));
-            }
-
-
-            // Generate transaction number
-            String transactionNumber = generateTransactionNumber();
-
-            // Calculate total price
-            BigDecimal totalPriceTransaction = calculateTotalPrice(transaction.getTransactionDetails());
-            // BigDecimal totalPriceTransaction = BigDecimal.valueOf(100000);
-
-            log.info("TOTAL PRICE : "+totalPriceTransaction);
-
-            // Create transaction entity
-            Transaction newTransaction = new Transaction();
-            newTransaction.setUserId(userDetails.getUser().getId());
-            newTransaction.setTransactionNumber(transactionNumber);
-            newTransaction.setCreatedDate(LocalDateTime.now());
-            newTransaction.setTotalPriceTransaction(totalPriceTransaction);
-
-            // Save transaction
-            Transaction savedTransaction = transactionRepository.save(newTransaction);
-            log.info("Transaction created with ID: {}", savedTransaction.getId());
-
-            // Create transaction details
-            // List<TransactionDetail> transactionDetails = createTransactionDetails(
-               //     transaction.getTransactionDetails(), savedTransaction.getId(), userDetails.getUser().getId());
-
-            // Create transaction details dan update stock
-            List<TransactionDetail> transactionDetails = new ArrayList<>();
-            for (TransactionDetailDTO dto : transaction.getTransactionDetails()) {
-                Product product = productMap.get(dto.getProductId());
-
-                log.info("DATA PRODUCT : {} ",product);
-                log.info("Product price : "+product.getPrice());
-
-//                BigDecimal totalPriceDetail = BigDecimal.valueOf(dto.getPrice() * dto.getQtyTransaction());
-                BigDecimal totalPriceDetail = product.getPrice().multiply(BigDecimal.valueOf(dto.getQtyTransaction()));
-
-                // Create transaction detail
-                TransactionDetail detail = new TransactionDetail();
-                detail.setTransactionId(savedTransaction.getId());
-                detail.setProductId(dto.getProductId());
-                detail.setQtyTransaction(dto.getQtyTransaction());
-//                detail.setPrice(BigDecimal.valueOf(dto.getPrice()));
-                detail.setPrice(product.getPrice());
-                detail.setCreatedDate(LocalDateTime.now());
-                detail.setCreatedBy(userDetails.getUser().getId());
-                detail.setTotalPrice(totalPriceDetail);
-
-                transactionDetails.add(detail);
-
-                // Update stock
-                product.setStock(product.getStock() - dto.getQtyTransaction());
-            }
-
-            // Save updated products (stock update)
-            productRepository.saveAll(products);
-
-            // Save all transaction details
-            List<TransactionDetail> savedDetails = transactionDetailRepository.saveAll(transactionDetails);
-
-            // Prepare response
-            return ResponseFactory.success("Transaction Success", HttpStatus.CREATED, savedDetails);
-
-        } catch (Exception e) {
-            log.error("Error creating transaction: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to create transaction: " + e.getMessage());
-
-        }
+        return ResponseFactory.success(
+                "Transaction created successfully",
+                HttpStatus.CREATED,
+                mapToTransactionResponse(savedTransaction, savedDetails)
+        );
     }
 
     @Override
+    @Transactional(readOnly = true)
     public TransactionResponse getTransactionById(Integer id) {
         Transaction transaction = transactionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Transaction not found with ID: " + id));
+                .orElseThrow(() -> new TrxNotFoundException("Transaction not found with ID: " + id));
 
         List<TransactionDetail> details = transactionDetailRepository.findByTransactionId(id);
-
         return mapToTransactionResponse(transaction, details);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public TransactionResponse getTransactionByTransactionNumber(String transactionNumber) {
         Transaction transaction = transactionRepository.findByTransactionNumber(transactionNumber)
-                .orElseThrow(() -> new RuntimeException("Transaction not found with number: " + transactionNumber));
+                .orElseThrow(() -> new TrxNotFoundException("Transaction not found with number: " + transactionNumber));
 
         List<TransactionDetail> details = transactionDetailRepository.findByTransactionId(transaction.getId());
-
         return mapToTransactionResponse(transaction, details);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<TransactionResponse> getAllTransactions() {
-        List<Transaction> transactions = transactionRepository.findAll();
-        return transactions.stream().map(transaction -> {
-            List<TransactionDetail> details = transactionDetailRepository.findByTransactionId(transaction.getId());
-            return mapToTransactionResponse(transaction, details);
-        }).collect(Collectors.toList());
-    }
-
-    @Override
-    public List<TransactionResponse> getTransactionsByUserId(Integer userId) {
-        List<Transaction> allTransactions = transactionRepository.findAll();
-        return allTransactions.stream()
-                .filter(transaction -> transaction.getUserId().equals(userId))
-                .map(transaction -> {
-                    List<TransactionDetail> details = transactionDetailRepository.findByTransactionId(transaction.getId());
-                    return mapToTransactionResponse(transaction, details);
-                })
+        return transactionRepository.findAllWithDetails()
+                .stream()
+                .map(this::mapToTransactionResponse)
                 .collect(Collectors.toList());
     }
 
-    private String generateTransactionNumber() {
-        return "TRX-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase() + "-" + System.currentTimeMillis();
+    @Override
+    @Transactional(readOnly = true)
+    public Page<TransactionResponse> getAllTransactions(Pageable pageable) {
+        return transactionRepository.findAll(pageable)
+                .map(this::mapToTransactionResponse);
     }
 
-//    private BigDecimal calculateTotalPrice(List<TransactionDetailDTO> details) {
-//        return details.stream()
-//                .map(detail -> BigDecimal.valueOf(1000 * detail.getQtyTransaction()))
-//                .reduce(BigDecimal.ZERO, BigDecimal::add);
-//    }
+    @Override
+    @Transactional(readOnly = true)
+    public List<TransactionResponse> getTransactionsByUserId(Integer userId) {
+        return transactionRepository.findByUserIdWithDetails(userId)
+                .stream()
+                .map(this::mapToTransactionResponse)
+                .collect(Collectors.toList());
+    }
 
-    private BigDecimal calculateTotalPrice(List<TransactionDetailDTO> transactionDetails) {
-        // Kumpulkan semua productId
+    // ==================== PRIVATE HELPER METHODS ====================
+
+    private void validateTransactionRequest(TransactionDTO transactionDTO) {
+        if (transactionDTO == null || transactionDTO.getTransactionDetails() == null) {
+            throw new TrxValidationException("Transaction request cannot be null");
+        }
+
+        if (transactionDTO.getTransactionDetails().isEmpty()) {
+            throw new TrxValidationException("Transaction must have at least one item");
+        }
+
+        // Validasi duplicate product
+        Set<Long> productIds = new HashSet<>();
+        for (TransactionDetailDTO detail : transactionDTO.getTransactionDetails()) {
+            if (!productIds.add(detail.getProductId())) {
+                throw new TrxValidationException("Duplicate product ID: " + detail.getProductId());
+            }
+
+            if (detail.getQtyTransaction() <= 0) {
+                throw new TrxValidationException("Quantity must be greater than 0 for product ID: " + detail.getProductId());
+            }
+        }
+    }
+
+    private Map<Long, Product> fetchAndValidateProducts(List<TransactionDetailDTO> details) {
+        Set<Long> productIds = details.stream()
+                .map(TransactionDetailDTO::getProductId)
+                .collect(Collectors.toSet());
+
+        List<Product> products = productRepository.findAllById(productIds);
+
+        if (products.size() != productIds.size()) {
+            Set<Long> foundIds = products.stream()
+                    .map(Product::getId)
+                    .collect(Collectors.toSet());
+
+            Set<Long> missingIds = productIds.stream()
+                    .filter(id -> !foundIds.contains(id))
+                    .collect(Collectors.toSet());
+
+            throw new TrxNotFoundException("Products not found with IDs: " + missingIds);
+        }
+
+        return products.stream()
+                .collect(Collectors.toMap(Product::getId, Function.identity()));
+    }
+
+    private void validateStockAvailability(List<TransactionDetailDTO> details, Map<Long, Product> productMap) {
+        List<String> insufficientStockMessages = new ArrayList<>();
+
+        for (TransactionDetailDTO detail : details) {
+            Product product = productMap.get(detail.getProductId());
+            if (product.getStock() < detail.getQtyTransaction()) {
+                insufficientStockMessages.add(
+                        String.format("Product '%s' (ID: %d): Available %d, Requested %d",
+                                product.getProductName(),
+                                product.getId(),
+                                product.getStock(),
+                                detail.getQtyTransaction())
+                );
+            }
+        }
+
+        if (!insufficientStockMessages.isEmpty()) {
+            throw new TrxInsufficientStockException("Insufficient stock: " + String.join("; ", insufficientStockMessages));
+        }
+    }
+
+    private Map<Long, Product> fetchProductMap(List<TransactionDetailDTO> transactionDetails) {
+        // Kumpulkan semua productId dari transactionDetails
         List<Long> productIds = transactionDetails.stream()
                 .map(TransactionDetailDTO::getProductId)
                 .collect(Collectors.toList());
 
-        // Ambil semua produk sekaligus
+        // Fetch semua produk sekaligus (lebih efisien daripada loop)
         List<Product> products = productRepository.findAllById(productIds);
 
-        // Buat map untuk akses cepat
-        Map<Long, BigDecimal> productPriceMap = products.stream()
-                .collect(Collectors.toMap(
-                        Product::getId,
-                        Product::getPrice
-                ));
-
-        // Hitung total
-        BigDecimal totalPrice = BigDecimal.ZERO;
-
-        for (TransactionDetailDTO detail : transactionDetails) {
-            BigDecimal price = productPriceMap.get(detail.getProductId());
-            if (price == null) {
-//                throw new ResourceNotFoundException("Product not found with id: " + detail.getProductId());
-                throw new RuntimeException("Product not found with id: "+detail.getProductId());
-            }
-
-            BigDecimal subtotal = price.multiply(BigDecimal.valueOf(detail.getQtyTransaction()));
-            totalPrice = totalPrice.add(subtotal);
-        }
-
-        return totalPrice;
+        // Convert ke Map untuk akses cepat
+        return products.stream()
+                .collect(Collectors.toMap(Product::getId, Function.identity()));
     }
 
-//    private List<TransactionDetail> createTransactionDetails(
-//            List<TransactionDetailDTO> detailRequests, Integer transactionId, Integer createdBy) {
-//
-//        return detailRequests.stream().map(detailRequest -> {
-//            TransactionDetail detail = new TransactionDetail();
-//            detail.setTransactionId(transactionId);
-//            detail.setProductId(detailRequest.getProductId());
-//            detail.setQtyTransaction(detailRequest.getQtyTransaction());
-//            // detail.setPrice(BigDecimal.valueOf(detailRequest.getPrice()));
-//            // detail.setTotalPrice(BigDecimal.valueOf(detailRequest.getPrice() * detailRequest.getQtyTransaction()));
-//            detail.setPrice(BigDecimal.valueOf(4000));
-//            detail.setTotalPrice(BigDecimal.valueOf(4000 * detailRequest.getQtyTransaction()));
-//            detail.setCreatedDate(LocalDateTime.now());
-//            detail.setCreatedBy(createdBy);
-//            return detail;
-//        }).collect(Collectors.toList());
-//    }
+    private Transaction createTransactionEntity(TransactionDTO transactionDTO, UserDetailsImpl userDetails) {
+
+        // Fetch productMap
+        Map<Long, Product> productMap = fetchProductMap(transactionDTO.getTransactionDetails());
+
+        Transaction transaction = new Transaction();
+        transaction.setUserId(userDetails.getUser().getId());
+        transaction.setTransactionNumber(transactionNumberGenerator.generate());
+        transaction.setCreatedDate(LocalDateTime.now());
+        transaction.setTotalPriceTransaction(calculateTotalPrice(transactionDTO.getTransactionDetails(),productMap));
+        return transaction;
+    }
+
+    private List<TransactionDetail> createTransactionDetails(List<TransactionDetailDTO> detailDTOs,
+                                                             Integer transactionId,
+                                                             Integer createdBy,
+                                                             Map<Long, Product> productMap) {
+        return detailDTOs.stream()
+                .map(dto -> {
+                    Product product = productMap.get(dto.getProductId());
+                    BigDecimal subtotal = product.getPrice()
+                            .multiply(BigDecimal.valueOf(dto.getQtyTransaction()));
+
+                    return TransactionDetail.builder()
+                            .transactionId(transactionId)
+                            .productId(dto.getProductId())
+                            .qtyTransaction(dto.getQtyTransaction())
+                            .price(product.getPrice())
+                            .totalPrice(subtotal)
+                            .createdDate(LocalDateTime.now())
+                            .createdBy(createdBy)
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+
+    private void updateProductStock(List<TransactionDetailDTO> details, Map<Long, Product> productMap) {
+        details.forEach(dto -> {
+            Product product = productMap.get(dto.getProductId());
+            product.setStock(product.getStock() - dto.getQtyTransaction());
+        });
+    }
+
+    private BigDecimal calculateTotalPrice(List<TransactionDetailDTO> details, Map<Long, Product> productMap) {
+        return details.stream()
+                .map(dto -> {
+                    Product product = productMap.get(dto.getProductId());
+                    if (product == null) {
+                        throw new TrxNotFoundException("Product not found with id: " + dto.getProductId());
+                    }
+                    return product.getPrice().multiply(BigDecimal.valueOf(dto.getQtyTransaction()));
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private TransactionResponse mapToTransactionResponse(Transaction transaction) {
+        List<TransactionDetail> details = transactionDetailRepository.findByTransactionId(transaction.getId());
+        return mapToTransactionResponse(transaction, details);
+    }
 
     private TransactionResponse mapToTransactionResponse(Transaction transaction, List<TransactionDetail> details) {
-        TransactionResponse response = new TransactionResponse();
-        response.setId(transaction.getId());
-        response.setUserId(transaction.getUserId());
-        response.setTransactionNumber(transaction.getTransactionNumber());
-        response.setCreatedDate(transaction.getCreatedDate());
-        response.setTotalPriceTransaction(transaction.getTotalPriceTransaction());
+        return TransactionResponse.builder()
+                .id(transaction.getId())
+                .userId(transaction.getUserId())
+                .transactionNumber(transaction.getTransactionNumber())
+                .createdDate(transaction.getCreatedDate())
+                .totalPriceTransaction(transaction.getTotalPriceTransaction())
+                .transactionDetails(mapToDetailResponses(details))
+                .build();
+    }
 
-        List<TransactionDetailResponse> detailResponses = details.stream()
+    private List<TransactionDetailResponse> mapToDetailResponses(List<TransactionDetail> details) {
+        return details.stream()
                 .map(this::mapToTransactionDetailResponse)
                 .collect(Collectors.toList());
-
-        response.setTransactionDetails(detailResponses);
-        return response;
     }
 
     private TransactionDetailResponse mapToTransactionDetailResponse(TransactionDetail detail) {
-        TransactionDetailResponse response = new TransactionDetailResponse();
-        response.setId(detail.getId());
-        response.setTransactionId(detail.getTransactionId());
-        response.setProductId(detail.getProductId());
-        response.setQtyTransaction(detail.getQtyTransaction());
-        response.setPrice(detail.getPrice());
-        response.setTotalPrice(detail.getTotalPrice());
-        response.setCreatedDate(detail.getCreatedDate());
-        response.setCreatedBy(detail.getCreatedBy());
-        return response;
+        return TransactionDetailResponse.builder()
+                .id(detail.getId())
+                .transactionId(detail.getTransactionId())
+                .productId(detail.getProductId())
+                .qtyTransaction(detail.getQtyTransaction())
+                .price(detail.getPrice())
+                .totalPrice(detail.getTotalPrice())
+                .createdDate(detail.getCreatedDate())
+                .createdBy(detail.getCreatedBy())
+                .build();
     }
 }

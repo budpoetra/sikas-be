@@ -12,18 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 public class TransactionDTO {
 
-//    @NotNull(message = "User ID cannot be null")
-//    private Integer userId;
-
-//    @NotNull(message = "Total price cannot be null")
-//    private Integer to;
-
     @NotEmpty(message = "Transaction details cannot be empty")
     private List<TransactionDetailDTO> transactionDetails;
 
-//    @NotNull(message = "Created by cannot be null")
-//    private Integer createdBy;
 }
-
-
-// validasi productId, qtyTransaction, price tidak boleh koosong, integer

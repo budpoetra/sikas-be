@@ -18,7 +18,4 @@ public class TransactionDetailDTO {
     @Min(value = 1, message = "Quantity must be at least 1")
     private Integer qtyTransaction;
 
-//    @NotNull(message = "Price cannot be null")
-//    @Min(value = 0, message = "Price cannot be negative")
-//    private Integer price;
 }
