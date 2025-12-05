@@ -9,10 +9,10 @@ on:
       - production
 
 jobs:
-  build-and-push:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Set up JDK 21
@@ -28,7 +28,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
-      - name: Build and push Docker image
+      - name: Build and Push Docker Image
         uses: docker/build-push-action@v4
         with:
           context: .
@@ -36,10 +36,10 @@ jobs:
           tags: ${{ secrets.DOCKER_USERNAME }}/sikas-be-image:latest
 
   deploy:
-    needs: build-and-push
     runs-on: ubuntu-latest
+    needs: build
     steps:
-      - name: Deploy to server
+      - name: Deploy to Remote Server
         uses: appleboy/ssh-action@v0.1.5
         with:
           host: ${{ secrets.SSH_HOST }}
