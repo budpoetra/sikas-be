@@ -15,10 +15,8 @@ import com.juaracoding.sikas.dto.MetaDTO;
 import com.juaracoding.sikas.dto.response.ApiResponse;
 import com.juaracoding.sikas.dto.response.PageResponse;
 import com.juaracoding.sikas.dto.validation.ProductDTO;
-import com.juaracoding.sikas.dto.response.ProductCategoryResponse;
 import com.juaracoding.sikas.dto.response.ProductResponse;
 import com.juaracoding.sikas.model.Product;
-import com.juaracoding.sikas.model.User;
 import com.juaracoding.sikas.repository.ProductCategoryRepository;
 import com.juaracoding.sikas.repository.ProductRepository;
 import com.juaracoding.sikas.service.ProductService;
@@ -35,7 +33,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Optional;
