@@ -22,7 +22,7 @@ public class TransactionController {
 
     @PostMapping
     @Loggable
-    public ResponseEntity<ApiResponse<Object>> login(
+    public ResponseEntity<ApiResponse<Object>> createTransactions(
             @Valid @RequestBody TransactionDTO trx,
             HttpServletRequest request,
             @AuthenticationPrincipal UserDetailsImpl userDetails
@@ -33,6 +33,7 @@ public class TransactionController {
                 request,
                 userDetails
         );
+
     }
 
 
