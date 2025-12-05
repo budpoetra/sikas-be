@@ -13,10 +13,12 @@ Version 1.0
 import com.juaracoding.sikas.constant.TokenType;
 import com.juaracoding.sikas.model.UserToken;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
+@Repository
 public interface UserTokenRepository extends JpaRepository<UserToken, Integer> {
     boolean existsByTokenAndExpiredFalseAndRevokedFalse(String token);
 

@@ -12,7 +12,9 @@ Version 1.0
 
 import com.juaracoding.sikas.model.MasterUserType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
+@Repository
 public interface MasterUserTypeRepository extends JpaRepository<MasterUserType, Integer> {
     MasterUserType findByUserType(String userType);
 }

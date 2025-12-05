@@ -19,7 +19,6 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 
 import javax.sql.DataSource;
-import java.util.Random;
 
 @Configuration
 public class MainConfig {
@@ -27,15 +26,10 @@ public class MainConfig {
     @Autowired
     private Environment env;
 
-    @Bean
-    public Random getRandom(){
-        return new Random();
-    }
-
     @Primary
     @Bean
     public DataSource getDataSource(){
-        DataSourceBuilder dataSourceBuilder = DataSourceBuilder.create();
+        DataSourceBuilder<?> dataSourceBuilder = DataSourceBuilder.create();
         dataSourceBuilder.url(Crypto.performDecrypt(env.getProperty("spring.datasource.url")));
         dataSourceBuilder.username(Crypto.performDecrypt(env.getProperty("spring.datasource.username")));
         dataSourceBuilder.password(Crypto.performDecrypt(env.getProperty("spring.datasource.password")));

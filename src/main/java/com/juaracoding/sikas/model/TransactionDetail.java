@@ -21,13 +21,13 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "TransactionDetails")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@EntityListeners(AuditingEntityListener.class)
 public class TransactionDetail {
 
     @Id
@@ -64,7 +64,7 @@ public class TransactionDetail {
     private Product product;
 
     @Column(name = "QtyTransaction", nullable = false)
-    private Long qtyTransaction;
+    private Integer qtyTransaction;
 
     @Column(name = "Price", nullable = false, precision = 13, scale = 0)
     private BigDecimal price;
