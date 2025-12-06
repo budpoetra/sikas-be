@@ -1,7 +1,7 @@
 # SIKAS
 
 **SIKAS (Sistem Informasi Stok dan Kasir)** adalah aplikasi berbasis web yang dirancang untuk membantu UMKM dalam mengelola stok barang serta proses penjualan secara efisien. Aplikasi ini menyediakan fitur manajemen inventaris, pencatatan transaksi penjualan, laporan keuangan,
-dan analisis data penjualan.
+dan analisis data penjualan. 
 
 ## Cara Menjalankan Aplikasi (Development)
 
