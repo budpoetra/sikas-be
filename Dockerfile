@@ -13,6 +13,14 @@ COPY src ./src
 # Copy application-example.yaml to application.yaml
 RUN cp src/main/resources/application-example.yaml src/main/resources/application.yaml
 
+# Change spring active profile in application.yaml to "prod"
+RUN sed -i 's/active: dev/active: prod/' src/main/resources/application.yaml
+
+# Change logging levels and enable sensitive data masking in application.yaml
+RUN sed -i 's/root: INFO/root: WARN/' src/main/resources/application.yaml && \
+    sed -i 's/app: DEBUG/app: INFO/' src/main/resources/application.yaml && \
+    sed -i 's/mask-sensitive: false/mask-sensitive: true/' src/main/resources/application.yaml
+
 # Build jar
 RUN mvn -B -DskipTests package
 
