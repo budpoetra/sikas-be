@@ -37,6 +37,6 @@ public class GlobalFallbackController {
         response.put("status", HttpStatus.NOT_FOUND.value());
         response.put("data", null);
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 }
