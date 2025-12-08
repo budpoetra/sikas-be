@@ -34,6 +34,4 @@ public interface TransactionService {
     Page<TransactionResponse> getAllTransactions(Pageable pageable);
 
     List<TransactionResponse> getTransactionsByUserId(Integer userId);
-
-    ResponseEntity<ApiResponse<Object>> getProductForTransaction(String search);
 }

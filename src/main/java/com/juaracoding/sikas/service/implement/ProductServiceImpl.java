@@ -32,9 +32,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Slf4j
@@ -322,6 +324,60 @@ public class ProductServiceImpl implements ProductService {
             int mod = sum % 10;
             return (mod == 0) ? 0 : (10 - mod);
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ResponseEntity<ApiResponse<Object>> getByCodeOrBarcode(String codeOrBarcode) {
+        try {
+            if (codeOrBarcode == null || codeOrBarcode.isBlank()) {
+                log.warn("Query parameter is null or blank");
+
+                return ResponseFactory.error(
+                        "Query parameter cannot be null or blank",
+                        HttpStatus.BAD_REQUEST,
+                        null
+                );
+            }
+
+            Optional<Product> productOpt = productRepository.findByProductCodeIgnoreCaseOrBarcodeIgnoreCase(codeOrBarcode, codeOrBarcode);
+
+            if (productOpt.isEmpty()) {
+                log.warn("Product not found with query: {}", codeOrBarcode);
+
+                return ResponseFactory.error(
+                        "Product not found",
+                        HttpStatus.NOT_FOUND,
+                        null
+                );
+            }
+
+            Product product = productOpt.get();
+
+            Map<String, Object> response = Map.of(
+                    "id", product.getId(),
+                    "productName", product.getProductName(),
+                    "productCode", product.getProductCode(),
+                    "barcode", product.getBarcode(),
+                    "price", product.getPrice(),
+                    "stock", product.getStock()
+            );
+
+            return ResponseFactory.success(
+                    "Products fetched successfully for transaction",
+                    HttpStatus.OK,
+                    response
+            );
+        } catch (Exception e) {
+            log.error("Error fetching product for transaction: {}", e.getMessage());
+
+            return ResponseFactory.error(
+                    "An error occurred while fetching product",
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    null
+            );
+        }
+
     }
 
     private ProductResponse toResponse(Product p) {

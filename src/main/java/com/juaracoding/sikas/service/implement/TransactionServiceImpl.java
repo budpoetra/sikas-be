@@ -133,60 +133,6 @@ public class TransactionServiceImpl implements TransactionService {
                 .collect(Collectors.toList());
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public ResponseEntity<ApiResponse<Object>> getProductForTransaction(String search) {
-        try {
-            if (search == null || search.isBlank()) {
-                log.warn("Query parameter is null or blank");
-
-                return ResponseFactory.error(
-                        "Query parameter cannot be null or blank",
-                        HttpStatus.BAD_REQUEST,
-                        null
-                );
-            }
-
-            Optional<Product> productOpt = productRepository.findByProductCodeIgnoreCaseOrBarcodeIgnoreCase(search, search);
-
-            if (productOpt.isEmpty()) {
-                log.warn("Product not found with query: {}", search);
-
-                return ResponseFactory.error(
-                        "Product not found",
-                        HttpStatus.NOT_FOUND,
-                        null
-                );
-            }
-
-            Product product = productOpt.get();
-
-            Map<String, Object> response = Map.of(
-                    "id", product.getId(),
-                    "productName", product.getProductName(),
-                    "productCode", product.getProductCode(),
-                    "barcode", product.getBarcode(),
-                    "price", product.getPrice(),
-                    "stock", product.getStock()
-            );
-
-            return ResponseFactory.success(
-                    "Products fetched successfully for transaction",
-                    HttpStatus.OK,
-                    response
-            );
-        } catch (Exception e) {
-            log.error("Error fetching product for transaction: {}", e.getMessage());
-
-            return ResponseFactory.error(
-                    "An error occurred while fetching product",
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    null
-            );
-        }
-
-    }
-
     // ==================== PRIVATE HELPER METHODS ====================
 
     private void validateTransactionRequest(TransactionDTO transactionDTO) {
