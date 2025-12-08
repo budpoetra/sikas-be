@@ -42,8 +42,8 @@ public class OpenApiConfig {
                                 .name("Java Warriors"))
                 )
                 .servers(List.of(
-                        new Server().url("http://localhost:8080").description("Development server"),
-                        new Server().url("http://103.164.191.212:8083").description("Production server")
+                        new Server().url("http://localhost:8080").description("Development Server"),
+                        new Server().url("http://103.164.191.212:8083").description("Production Server")
                 ))
                 .addSecurityItem(new SecurityRequirement().addList(SECURITY_SCHEME_NAME))
                 .components(new Components()
