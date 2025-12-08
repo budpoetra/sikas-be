@@ -40,6 +40,8 @@ public interface ProductService {
             String direction,
             HttpServletRequest request
     );
+
+    ResponseEntity<ApiResponse<Object>> getByCodeOrBarcode(String codeOrBarcode);
 }
 
 
