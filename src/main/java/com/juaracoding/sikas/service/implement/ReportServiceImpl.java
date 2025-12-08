@@ -142,6 +142,7 @@ public class ReportServiceImpl implements ReportService {
                 Map<String, Object> map = new HashMap<>();
                 map.put("id", product.getId());
                 map.put("name", product.getProductName());
+                map.put("code", product.getProductCode());
                 map.put("total", totalQty);
                 map.put("totalPrice", totalPrice);
 

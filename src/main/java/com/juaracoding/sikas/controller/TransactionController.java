@@ -38,10 +38,4 @@ public class TransactionController {
 
     }
 
-    @Loggable
-    @GetMapping
-    public ResponseEntity<ApiResponse<Object>> searchProductForTransaction(@RequestParam(required = false) String search) {
-        return transactionService.getProductForTransaction(search);
-    }
-
 }

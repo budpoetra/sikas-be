@@ -76,6 +76,14 @@ public class ProductController {
                                                            HttpServletRequest request) {
         return service.getListProduct(search, page, size, sort, direction, request);
     }
+
+    @Loggable
+    @GetMapping("/code-or-barcode")
+    public ResponseEntity<ApiResponse<Object>> getByCodeOrBarcode(
+            @RequestParam("value") String value
+    ) {
+        return service.getByCodeOrBarcode(value);
+    }
 }
 
 
