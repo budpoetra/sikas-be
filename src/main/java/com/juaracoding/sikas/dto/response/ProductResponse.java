@@ -26,6 +26,7 @@ public class ProductResponse {
     private String productName;
     private String productCode;
     private Long categoryId;
+    private String categoryName;
     private BigDecimal price;
     private String barcode;
     private Integer stock;

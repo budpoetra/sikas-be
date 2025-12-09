@@ -30,7 +30,7 @@ public interface ProductEntryRepository extends JpaRepository<ProductEntry, Long
         WHERE pe.CreatedDate BETWEEN :startDate AND :endDate
         ORDER BY pe.CreatedDate DESC
     """, nativeQuery = true)
-    List<Object[]> findTop10ProductEntries(
+    List<ProductEntry> findTop10ProductEntries(
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate
     );
