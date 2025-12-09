@@ -58,4 +58,15 @@ public class ProductEntry {
     @CreatedBy
     @Column(name = "CreatedBy", nullable = false, updatable = false)
     private Integer createdBy;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "CreatedBy",
+            referencedColumnName = "Id",
+            insertable = false,
+            updatable = false,
+            foreignKey = @ForeignKey(name = "FK_User_ProductEntry")
+    )
+    @JsonBackReference
+    private User user;
 }
