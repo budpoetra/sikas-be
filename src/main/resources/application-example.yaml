@@ -4,14 +4,16 @@ server:
 spring:
   application:
     name: SIKAS
+
   profiles:
     active: dev
+
   datasource:
-    # Example url for local SQL Server : jdbc:sqlserver://localhost:1433;databaseName=DbSikas;schema=dbo;encrypt=true;trustServerCertificate=true
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+
   jpa:
     hibernate:
       ddl-auto: create
@@ -24,9 +26,22 @@ spring:
         default_schema: dbo
         format_sql: true
         dialect: org.hibernate.dialect.SQLServerDialect
+
   sql:
     init:
       mode: always
+
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 jwt:
   secret: ${JWT_SECRET}
@@ -38,12 +53,18 @@ logging:
   level:
     root: INFO
     app: DEBUG
+
   mask-sensitive: false
 
 springdoc:
   api-docs:
     path: /v3/api-docs
+
   swagger-ui:
     path: /swagger-ui.html
     tryItOutEnabled: true
     filter: true
+
+google:
+  recaptcha:
+    secret-key: ${RECAPTCHA_SECRET_KEY}
