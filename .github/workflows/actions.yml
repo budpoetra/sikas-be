@@ -50,4 +50,18 @@ jobs:
             docker pull ${{ secrets.DOCKER_USERNAME }}/sikas-be-image:latest
             docker stop sikas-be || true
             docker rm sikas-be || true
-            docker run -d --name sikas-be -p 8083:8080 --network jc-network -e DB_URL="${{ secrets.DB_URL }}" -e DB_USERNAME="${{ secrets.DB_USERNAME }}" -e DB_PASSWORD="${{ secrets.DB_PASSWORD }}" -e JWT_SECRET="${{ secrets.JWT_SECRET }}" -e JWT_REFRESH_SECRET="${{ secrets.JWT_REFRESH_SECRET }}" budpoetra/sikas-be-image:latest
+            docker run -d \
+              --name sikas-be \
+              -p 8083:8080 \
+              --network jc-network \
+              -e DB_URL="${{ secrets.DB_URL }}" \
+              -e DB_USERNAME="${{ secrets.DB_USERNAME }}" \
+              -e DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
+              -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+              -e JWT_REFRESH_SECRET="${{ secrets.JWT_REFRESH_SECRET }}" \
+              -e MAIL_HOST="${{ secrets.MAIL_HOST }}" \
+              -e MAIL_PORT="${{ secrets.MAIL_PORT }}" \
+              -e MAIL_USERNAME="${{ secrets.MAIL_USERNAME }}" \
+              -e MAIL_PASSWORD="${{ secrets.MAIL_PASSWORD }}" \
+              -e RECAPTCHA_SECRET_KEY="${{ secrets.RECAPTCHA_SECRET_KEY }}" \
+              budpoetra/sikas-be-image:latest
