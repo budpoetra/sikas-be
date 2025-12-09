@@ -386,6 +386,7 @@ public class ProductServiceImpl implements ProductService {
                 .productName(p.getProductName())
                 .productCode(p.getProductCode())
                 .categoryId(p.getCategoryId())
+                .categoryName(p.getCategory().getCategory())
                 .barcode(p.getBarcode())
                 .price(p.getPrice())
                 .status(p.getStatus())

@@ -49,12 +49,15 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     );
 
     @Query("""
-        SELECT p FROM Product p 
-        WHERE (:search IS NULL 
-                  OR LOWER(p.productName) LIKE LOWER(CONCAT('%', :search, '%'))
-                  OR LOWER(p.productCode) LIKE LOWER(CONCAT('%', :search, '%'))
-                  OR LOWER(p.barcode) LIKE LOWER(CONCAT('%', :search, '%'))
-            )
+        SELECT p
+        FROM Product p
+        WHERE p.status = 1
+          AND (
+                :search IS NULL
+                OR LOWER(p.productName) LIKE LOWER(CONCAT('%', :search, '%'))
+                OR LOWER(p.productCode) LIKE LOWER(CONCAT('%', :search, '%'))
+                OR LOWER(p.barcode) LIKE LOWER(CONCAT('%', :search, '%'))
+              )
     """)
     Page<Product> searchListProduct(@Param("search") String search, Pageable pageable);
 

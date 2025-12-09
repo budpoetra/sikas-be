@@ -97,6 +97,15 @@ public class User {
     @JsonManagedReference
     private List<Transaction> transactions;
 
+    @OneToMany(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY,
+            orphanRemoval = true
+    )
+    @JsonManagedReference
+    private List<ProductEntry> productEntries;
+
     @Column(name = "CreatedDate", nullable = false, updatable = false)
     private LocalDateTime createdDate;
 
