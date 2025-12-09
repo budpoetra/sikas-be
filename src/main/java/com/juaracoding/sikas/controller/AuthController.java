@@ -15,6 +15,7 @@ import com.juaracoding.sikas.dto.response.ApiResponse;
 import com.juaracoding.sikas.dto.validation.LoginDTO;
 import com.juaracoding.sikas.dto.response.AuthResponse;
 import com.juaracoding.sikas.model.User;
+import com.juaracoding.sikas.security.RecaptchaServiceImpl;
 import com.juaracoding.sikas.service.AuthService;
 import com.juaracoding.sikas.util.DtoToModelUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,12 +35,14 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
+    private final RecaptchaServiceImpl recaptchaService;
 
     @Value("${jwt.refresh-expiration}")
     private Long refreshTokenExpiration = 86400000L; // Default 24 hours in milliseconds
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, RecaptchaServiceImpl recaptchaService) {
         this.authService = authService;
+        this.recaptchaService = recaptchaService;
     }
 
     @PostMapping("/login")
@@ -49,6 +52,20 @@ public class AuthController {
             HttpServletRequest request,
             HttpServletResponse response
     ) {
+        boolean captchaValid = recaptchaService.verifyToken(dto.getCaptchaToken());
+
+        if (!captchaValid) {
+            return new ResponseEntity<>(
+                    new ApiResponse<>(
+                            false,
+                            "Captcha verification failed",
+                            HttpServletResponse.SC_BAD_REQUEST,
+                            null
+                    ),
+                    org.springframework.http.HttpStatus.BAD_REQUEST
+            );
+        }
+
         ResponseEntity<ApiResponse<Object>> serviceResponse = authService.login(
                 DtoToModelUtil.map(dto, User.class),
                 request

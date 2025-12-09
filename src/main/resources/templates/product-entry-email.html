@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Product Notification</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: #f4f6f8;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            padding: 30px 40px;
+        }
+
+        h2 {
+            color: #333333;
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        p {
+            font-size: 16px;
+            color: #555555;
+            line-height: 1.6;
+        }
+
+        .highlight {
+            color: #1a73e8;
+            font-weight: bold;
+        }
+
+        .product-box {
+            margin-top: 20px;
+            padding: 18px;
+            background: #f1f7ff;
+            border-left: 5px solid #1a73e8;
+            border-radius: 6px;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 13px;
+            color: #888;
+            margin-top: 35px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>Hello, <span class="highlight">{{addedBy}}</span></h2>
+
+    <p>
+        Below is the summary of the product entry activity:
+    </p>
+
+    <div class="product-box">
+        <p>
+            <strong>{{qty}}</strong> Products have been added for the item:
+            <span class="highlight">{{productName}}</span>
+        </p>
+    </div>
+
+    <p>
+        If this action was not performed by you, please review the logs or contact the system administrator immediately.
+    </p>
+
+    <div class="footer">
+        &copy; 2025 SIKAS System — Automated Notification Email
+    </div>
+</div>
+
+</body>
+</html>

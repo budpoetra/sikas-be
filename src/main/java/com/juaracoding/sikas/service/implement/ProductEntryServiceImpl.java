@@ -14,18 +14,23 @@ import com.juaracoding.sikas.model.Product;
 import com.juaracoding.sikas.model.ProductEntry;
 import com.juaracoding.sikas.repository.ProductEntryRepository;
 import com.juaracoding.sikas.repository.ProductRepository;
+import com.juaracoding.sikas.security.UserDetailsImpl;
+import com.juaracoding.sikas.service.MailerService;
 import com.juaracoding.sikas.service.ProductEntryService;
 import com.juaracoding.sikas.util.ResponseFactory;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import com.juaracoding.sikas.dto.response.ApiResponse;
 import com.juaracoding.sikas.dto.validation.ProductEntryDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 
+import java.util.Map;
 import java.util.Optional;
 
 @Slf4j
@@ -35,6 +40,7 @@ public class ProductEntryServiceImpl implements ProductEntryService {
 
     private final ProductRepository productRepository;
     private final ProductEntryRepository productEntryRepository;
+    private final MailerService mailerService;
 
     @Override
     @Transactional
@@ -56,6 +62,22 @@ public class ProductEntryServiceImpl implements ProductEntryService {
                     .qty(productEntry.getQty())
                     .build();
             productEntryRepository.save(newProductEntry);
+
+            Authentication auth = (Authentication) request.getUserPrincipal();
+            UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
+
+            Map<String, String> variables = Map.of(
+                    "addedBy", userDetails.getUser().getFullName(),
+                    "qty", String.valueOf(productEntry.getQty()),
+                    "productName", product.getProductName()
+            );
+
+            mailerService.sendTemplateEmail(
+                    userDetails.getUser().getEmail(),
+                    "New Product Entry Added",
+                    "templates/product-entry-email.html",
+                    variables
+            );
 
             return ResponseFactory.success(
                     "Successfully added " + productEntry.getQty() + " to product ID " + productEntry.getProductId(),
