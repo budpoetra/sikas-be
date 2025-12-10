@@ -17,6 +17,7 @@ import com.juaracoding.sikas.dto.response.PageResponse;
 import com.juaracoding.sikas.dto.validation.ProductDTO;
 import com.juaracoding.sikas.dto.response.ProductResponse;
 import com.juaracoding.sikas.model.Product;
+import com.juaracoding.sikas.model.ProductCategory;
 import com.juaracoding.sikas.repository.ProductCategoryRepository;
 import com.juaracoding.sikas.repository.ProductRepository;
 import com.juaracoding.sikas.service.ProductService;
@@ -67,7 +68,11 @@ public class ProductServiceImpl implements ProductService {
             if (productRepository.existsByProductCode(request.getProductCode())) {
                 log.warn("PDT004W02 - Duplicate productCode {}", request.getProductCode());
 
-                throw new RuntimeException("PDT004W02 - Product code already exists");
+                return ResponseFactory.error(
+                        "PDT004W02 - Duplicate product code",
+                        HttpStatus.BAD_REQUEST,
+                        null
+                );
             }
 
             String barcode = BarcodeGenerator.generateEAN13();
@@ -386,7 +391,11 @@ public class ProductServiceImpl implements ProductService {
                 .productName(p.getProductName())
                 .productCode(p.getProductCode())
                 .categoryId(p.getCategoryId())
-                .categoryName(p.getCategory().getCategory())
+                .categoryName(
+                        categoryRepository.findById(p.getCategoryId())
+                                .map(ProductCategory::getCategory)
+                                .orElse(null)
+                )
                 .barcode(p.getBarcode())
                 .price(p.getPrice())
                 .status(p.getStatus())

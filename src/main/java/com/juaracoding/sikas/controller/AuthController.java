@@ -37,6 +37,9 @@ public class AuthController {
     private final AuthService authService;
     private final RecaptchaServiceImpl recaptchaService;
 
+    @Value("${spring.profiles.active}")
+    private String activeProfile;
+
     @Value("${jwt.refresh-expiration}")
     private Long refreshTokenExpiration = 86400000L; // Default 24 hours in milliseconds
 
@@ -52,18 +55,22 @@ public class AuthController {
             HttpServletRequest request,
             HttpServletResponse response
     ) {
-        boolean captchaValid = recaptchaService.verifyToken(dto.getCaptchaToken());
+        if(!"dev".equals(activeProfile)) {
+            log.info("Verifying captcha for login request");
 
-        if (!captchaValid) {
-            return new ResponseEntity<>(
-                    new ApiResponse<>(
-                            false,
-                            "Captcha verification failed",
-                            HttpServletResponse.SC_BAD_REQUEST,
-                            null
-                    ),
-                    org.springframework.http.HttpStatus.BAD_REQUEST
-            );
+            boolean captchaValid = recaptchaService.verifyToken(dto.getCaptchaToken());
+
+            if (!captchaValid) {
+                return new ResponseEntity<>(
+                        new ApiResponse<>(
+                                false,
+                                "Captcha verification failed",
+                                HttpServletResponse.SC_BAD_REQUEST,
+                                null
+                        ),
+                        org.springframework.http.HttpStatus.BAD_REQUEST
+                );
+            }
         }
 
         ResponseEntity<ApiResponse<Object>> serviceResponse = authService.login(

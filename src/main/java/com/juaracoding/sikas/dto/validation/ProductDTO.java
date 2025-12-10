@@ -29,6 +29,7 @@ public class ProductDTO {
 
     @NotBlank(message = "Product code is required", groups = {Create.class})
     @Size(max = 4, message = "Product code must not exceed 4 characters", groups = {Create.class})
+    @Size(min = 4, message = "Product code must be at least 4 characters", groups = {Create.class})
     private String productCode;
 
     @NotNull(message = "Price is required", groups = {Create.class, Update.class})
