@@ -92,9 +92,9 @@ mvn spring-boot:run
 
 ## Developers
 
--   Kristo
+-   [Kristo](https://github.com/ritnomuda)
 -   [Budi Sahputra](https://github.com/budpoetra)
--   M. Fadli
+-   [M. Fadli](https://github.com/ahmad-user)
 -   Daffa
 -   Fauzi
 

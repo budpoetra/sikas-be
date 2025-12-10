@@ -142,6 +142,7 @@ public class ReportServiceImpl implements ReportService {
                 Map<String, Object> map = new HashMap<>();
                 map.put("id", product.getId());
                 map.put("name", product.getProductName());
+                map.put("code", product.getProductCode());
                 map.put("total", totalQty);
                 map.put("totalPrice", totalPrice);
 
@@ -209,18 +210,17 @@ public class ReportServiceImpl implements ReportService {
             LocalDateTime startDateReport = startDate != null ? parseStringToDateTime(startDate) : now.withDayOfMonth(1);
             LocalDateTime endDateReport = endDate != null ? parseStringToDateTime(endDate) : now;
 
-            List<Object[]> productEntries = productEntryRepository.findTop10ProductEntries(startDateReport, endDateReport);
+            List<ProductEntry> productEntries = productEntryRepository.findTop10ProductEntries(startDateReport, endDateReport);
 
             List<Map<String, Object>> result = new ArrayList<>();
-            for (Object[] row : productEntries) {
-                Map<String,Object> map = new HashMap<>();
-                map.put("id", row[0]);
-                map.put("productId", row[1]);
-                map.put("qty", row[2]);
-                map.put("createdDate", row[3]);
-                map.put("createdBy", row[4]);
-                map.put("productName", row[5]);
-                map.put("createdName", row[6]);
+            for (ProductEntry pe : productEntries) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("id", pe.getId());
+                map.put("productName", pe.getProduct().getProductName());
+                map.put("qty", pe.getQty());
+                map.put("createdBy", pe.getCreatedBy());
+                map.put("createdName", pe.getUser().getFullName());
+                map.put("createdDate", pe.getCreatedDate());
                 result.add(map);
             }
 

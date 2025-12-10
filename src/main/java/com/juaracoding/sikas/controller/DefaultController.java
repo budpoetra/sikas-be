@@ -12,7 +12,6 @@ Version 1.0
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
@@ -25,33 +24,11 @@ public class DefaultController {
     public ResponseEntity<Object> defaultRoute() {
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
-        response.put("message", "Welcome to SIKAS API");
+        response.put("message", "Welcome to SIKAS API v1.0");
         response.put("status", 200);
         response.put("data", null);
 
         return ResponseEntity.ok(response);
 
-    }
-
-    @GetMapping("/api/v1/show-token")
-    public ResponseEntity<Object> showToken(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-
-        Map<String, Object> response = new HashMap<>();
-
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            response.put("success", false);
-            response.put("message", "Authorization header missing or invalid");
-            response.put("token", null);
-            return ResponseEntity.status(400).body(response);
-        }
-
-        String token = authHeader.substring(7); // Menghapus "Bearer "
-
-        response.put("success", true);
-        response.put("message", "Token received");
-        response.put("token", token);
-
-        return ResponseEntity.ok(response);
     }
 }

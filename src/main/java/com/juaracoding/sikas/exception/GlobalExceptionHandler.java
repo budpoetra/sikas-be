@@ -13,6 +13,7 @@ Version 1.0
 import com.juaracoding.sikas.dto.response.ApiResponse;
 import com.juaracoding.sikas.util.ResponseFactory;
 import io.jsonwebtoken.JwtException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -25,11 +26,14 @@ import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<Object> handleJsonError(HttpMessageNotReadableException e) {
+        log.error("JSON parse error: {}", e.getMessage());
+
         return ResponseHandler.handleResponse(
                 HttpStatus.BAD_REQUEST,
                 "Malformed JSON request",
@@ -44,6 +48,8 @@ public class GlobalExceptionHandler {
                 errors.put(error.getField(), error.getDefaultMessage())
         );
 
+        log.error("Validation errors: {}", errors);
+
         return ResponseHandler.handleResponse(
                 HttpStatus.BAD_REQUEST,
                 "Validation failed",
@@ -53,6 +59,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<Object> handleBadCredentials(BadCredentialsException ex) {
+        log.error("Bad credentials: {}", ex.getMessage());
+
         return ResponseHandler.handleResponse(
                 HttpStatus.UNAUTHORIZED,
                 "Invalid username or password",
@@ -62,21 +70,38 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(TrxNotFoundException.class)
     public ResponseEntity<ApiResponse<Object>> handleNotFound(TrxNotFoundException ex) {
-        return ResponseFactory.error("Resource not found", HttpStatus.NOT_FOUND, ex.getMessage());
+        log.error("Transaction not found: {}", ex.getMessage());
+
+        return ResponseFactory.error(
+                "Resource not found",
+                HttpStatus.NOT_FOUND,
+                ex.getMessage());
     }
 
     @ExceptionHandler(TrxInsufficientStockException.class)
     public ResponseEntity<ApiResponse<Object>> handleInsufficientStock(TrxInsufficientStockException ex) {
-        return ResponseFactory.error("Insufficient stock", HttpStatus.CONFLICT, ex.getMessage());
+        log.error("Insufficient stock: {}", ex.getMessage());
+
+        return ResponseFactory.error(
+                "Insufficient stock",
+                HttpStatus.CONFLICT,
+                ex.getMessage());
     }
 
     @ExceptionHandler(TrxValidationException.class)
     public ResponseEntity<ApiResponse<Object>> handleValidation(TrxValidationException ex) {
-        return ResponseFactory.error("Validation error", HttpStatus.BAD_REQUEST, ex.getMessage());
+        log.error("Transaction validation error: {}", ex.getMessage());
+
+        return ResponseFactory.error(
+                "Validation error",
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage());
     }
 
     @ExceptionHandler(JwtException.class)
     public ResponseEntity<Object> handleJwtException(JwtException e) {
+        log.error("JWT error: {}", e.getMessage());
+
         return ResponseHandler.handleResponse(
                 HttpStatus.UNAUTHORIZED,
                 "Invalid or expired JWT token",
@@ -86,6 +111,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> handleGeneralError(Exception e) {
+        log.error("General error: {}", e.getMessage());
+
         return ResponseHandler.handleResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "An unexpected error occurred",
@@ -95,6 +122,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Object> handleRuntimeException(RuntimeException e) {
+        log.error("Runtime error: {}", e.getMessage());
+
         return ResponseHandler.handleResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 e.getMessage(),
@@ -104,6 +133,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DateTimeParseException.class)
     public ResponseEntity<Object> handleDateTimeParseException(DateTimeParseException e) {
+        log.error("Date time parse error: {}", e.getMessage());
+
         return ResponseHandler.handleResponse(
                 HttpStatus.BAD_REQUEST,
                 "Invalid date format. Expected format: yyyy-MM-dd HH:mm:ss",
@@ -113,6 +144,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Object> handleIllegalArgumentException(IllegalArgumentException e) {
+        log.error("Illegal argument: {}", e.getMessage());
+
         return ResponseHandler.handleResponse(
                 HttpStatus.BAD_REQUEST,
                 e.getMessage(),
