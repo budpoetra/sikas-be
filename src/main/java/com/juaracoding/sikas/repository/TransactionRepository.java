@@ -42,4 +42,11 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     );
 
     List<Transaction> findTop10ByOrderByCreatedDateDesc();
+
+
+    @Query("""
+            SELECT COUNT(t) FROM Transaction t
+            WHERE CAST(t.createdDate AS date) = CAST(GETDATE() AS date)
+    """)
+    Long countTodayTransactions();
 }

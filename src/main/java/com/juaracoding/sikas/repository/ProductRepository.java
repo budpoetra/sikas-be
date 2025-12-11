@@ -28,8 +28,11 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     boolean existsByProductCode(String productCode);
 
-    @Query("SELECT SUM(p.stock) FROM Product p")
-    Long getTotalStock();
+    @Query("SELECT SUM(p.stock) FROM Product p WHERE p.status = 1")
+    Long getTotalStockWhereStatusActive();
+
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.status = 1")
+    Long getTotalProductsWhereStatusActive();
 
     @Query("SELECT p FROM Product p WHERE p.stock <= :threshold ORDER BY p.stock ASC")
     List<Product> findLowStock(Integer threshold);
