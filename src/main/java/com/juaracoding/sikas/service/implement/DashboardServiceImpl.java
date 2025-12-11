@@ -11,9 +11,13 @@ Version 1.0
 */
 
 import com.juaracoding.sikas.dto.response.ApiResponse;
+import com.juaracoding.sikas.dto.response.Best10SellingProducts;
 import com.juaracoding.sikas.dto.response.DashboardSummaryResponse;
 import com.juaracoding.sikas.dto.response.LowStockItemResponse;
+import com.juaracoding.sikas.model.TransactionDetail;
 import com.juaracoding.sikas.repository.ProductRepository;
+import com.juaracoding.sikas.repository.TransactionDetailRepository;
+import com.juaracoding.sikas.repository.TransactionRepository;
 import com.juaracoding.sikas.service.DashboardService;
 import com.juaracoding.sikas.util.ResponseFactory;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +26,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -30,6 +35,8 @@ import java.util.stream.Collectors;
 public class DashboardServiceImpl implements DashboardService {
 
     private final ProductRepository productRepository;
+    private final TransactionRepository transactionRepository;
+    private final TransactionDetailRepository transactionDetailRepository;
 
     /**
      * Get dashboard summary including total products, total stock,
@@ -41,16 +48,18 @@ public class DashboardServiceImpl implements DashboardService {
     public ResponseEntity<ApiResponse<Object>> getSummary() {
 
         try {
-            Long totalProducts = productRepository.count();
-            Long totalStock = productRepository.getTotalStock();
-            if (totalStock == null) totalStock = 0L;
+            Long totalProducts = productRepository.getTotalProductsWhereStatusActive();
+            Long totalStock = productRepository.getTotalStockWhereStatusActive();
+            Long todayTransactions = transactionRepository.countTodayTransactions();
 
+            var best10SellingProducts = transactionDetailRepository.findTodaysTop10BestSellingProducts();
             var lowStock = productRepository.findLowStock(10);
 
             DashboardSummaryResponse response = DashboardSummaryResponse.builder()
                     .totalProducts(totalProducts)
                     .totalStock(totalStock)
-                    .todayTransactions(0L) // BELUM ADA TRANSAKSI
+                    .todayTransactions(todayTransactions)
+                    .best10SellingProducts(best10SellingProducts)
                     .lowStockItems(
                             lowStock.stream()
                                     .map(p -> LowStockItemResponse.builder()
@@ -70,7 +79,7 @@ public class DashboardServiceImpl implements DashboardService {
                     response
             );
         } catch (Exception e) {
-            log.warn("DSB006E01 - Error retrieving dashboard summary: {}", e.getMessage());
+            log.warn("DSB006E10 - Error retrieving dashboard summary: {}", e.getMessage());
 
             return ResponseFactory.error(
                     "DSB006E01 - Failed to retrieve dashboard summary",
